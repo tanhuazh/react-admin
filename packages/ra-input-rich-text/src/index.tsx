@@ -14,8 +14,8 @@ import {
     FormControl,
     InputLabel,
     PropTypes as MuiPropTypes,
-    makeStyles,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 
 import styles from './styles';
@@ -74,16 +74,20 @@ const RichTextInput: FunctionComponent<Props> = props => {
 
     const lastValueChange = useRef(value);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const onTextChange = useCallback(
         debounce(() => {
             const value =
                 editor.current.innerHTML === '<p><br></p>'
                     ? ''
                     : editor.current.innerHTML;
-            lastValueChange.current = value;
-            onChange(value);
+
+            if (lastValueChange.current !== value) {
+                lastValueChange.current = value;
+                onChange(value);
+            }
         }, 500),
-        []
+        [onChange]
     );
 
     useEffect(() => {

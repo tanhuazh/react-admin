@@ -1,5 +1,10 @@
-import React, { FC, useRef, useCallback, useMemo } from 'react';
-import { Form, FormProps } from 'react-final-form';
+import * as React from 'react';
+import { FC, useRef, useCallback, useEffect, useMemo } from 'react';
+import {
+    Form,
+    FormProps,
+    FormRenderProps as FinalFormFormRenderProps,
+} from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
 
 import useInitializeFormWithRecord from './useInitializeFormWithRecord';
@@ -9,6 +14,8 @@ import getFormInitialValues from './getFormInitialValues';
 import FormContext from './FormContext';
 import { Record } from '../types';
 import { RedirectionSideEffect } from '../sideEffect';
+import { useDispatch } from 'react-redux';
+import { setAutomaticRefresh } from '../actions/uiActions';
 
 /**
  * Wrapper around react-final-form's Form to handle redirection on submit,
@@ -31,10 +38,11 @@ import { RedirectionSideEffect } from '../sideEffect';
  * @prop {Function} save
  * @prop {boolean} submitOnEnter
  * @prop {string} redirect
+ * @prop {boolean} sanitizeEmptyValues
  *
  * @param {Prop} props
  */
-const FormWithRedirect: FC<FormWithRedirectOwnProps & FormProps> = ({
+const FormWithRedirect: FC<FormWithRedirectProps> = ({
     debug,
     decorators,
     defaultValue,
@@ -53,6 +61,7 @@ const FormWithRedirect: FC<FormWithRedirectOwnProps & FormProps> = ({
     validateOnBlur,
     version,
     warnWhenUnsavedChanges,
+    sanitizeEmptyValues: shouldSanitizeEmptyValues = true,
     ...props
 }) => {
     let redirect = useRef(props.redirect);
@@ -96,9 +105,16 @@ const FormWithRedirect: FC<FormWithRedirectOwnProps & FormProps> = ({
             typeof redirect.current === undefined
                 ? props.redirect
                 : redirect.current;
-        const finalValues = sanitizeEmptyValues(finalInitialValues, values);
 
-        onSave.current(finalValues, finalRedirect);
+        if (shouldSanitizeEmptyValues) {
+            const sanitizedValues = sanitizeEmptyValues(
+                finalInitialValues,
+                values
+            );
+            onSave.current(sanitizedValues, finalRedirect);
+        } else {
+            onSave.current(values, finalRedirect);
+        }
     };
 
     return (
@@ -117,8 +133,7 @@ const FormWithRedirect: FC<FormWithRedirectOwnProps & FormProps> = ({
                 subscription={subscription} // don't redraw entire form each time one field changes
                 validate={validate}
                 validateOnBlur={validateOnBlur}
-            >
-                {formProps => (
+                render={formProps => (
                     <FormView
                         {...props}
                         {...formProps}
@@ -130,15 +145,22 @@ const FormWithRedirect: FC<FormWithRedirectOwnProps & FormProps> = ({
                         warnWhenUnsavedChanges={warnWhenUnsavedChanges}
                     />
                 )}
-            </Form>
+            />
         </FormContext.Provider>
     );
 };
 
+export type FormWithRedirectProps = FormWithRedirectOwnProps &
+    Omit<FormProps, 'onSubmit' | 'active'>;
+
 export interface FormWithRedirectOwnProps {
     defaultValue?: any;
     record?: Record;
-    save: (
+    redirect?: RedirectionSideEffect;
+    render: (
+        props: Omit<FormViewProps, 'render' | 'setRedirect'>
+    ) => React.ReactElement<any, any>;
+    save?: (
         data: Partial<Record>,
         redirectTo: RedirectionSideEffect,
         options?: {
@@ -146,9 +168,9 @@ export interface FormWithRedirectOwnProps {
             onFailure?: (error: any) => void;
         }
     ) => void;
-    redirect: RedirectionSideEffect;
-    saving: boolean;
-    version: number;
+    sanitizeEmptyValues?: boolean;
+    saving?: boolean;
+    version?: number;
     warnWhenUnsavedChanges?: boolean;
 }
 
@@ -159,12 +181,34 @@ const defaultSubscription = {
     invalid: true,
 };
 
-const FormView = ({ render, warnWhenUnsavedChanges, ...props }) => {
+export type SetRedirect = (redirect: RedirectionSideEffect) => void;
+export type HandleSubmitWithRedirect = (
+    redirect?: RedirectionSideEffect
+) => void;
+interface FormViewProps
+    extends FormWithRedirectOwnProps,
+        Omit<FinalFormFormRenderProps, 'render' | 'active'> {
+    handleSubmitWithRedirect?: HandleSubmitWithRedirect;
+    setRedirect: SetRedirect;
+    warnWhenUnsavedChanges?: boolean;
+}
+
+const FormView: FC<FormViewProps> = ({
+    render,
+    warnWhenUnsavedChanges,
+    setRedirect,
+    ...props
+}) => {
     // if record changes (after a getOne success or a refresh), the form must be updated
     useInitializeFormWithRecord(props.record);
     useWarnWhenUnsavedChanges(warnWhenUnsavedChanges);
+    const dispatch = useDispatch();
 
-    const { redirect, setRedirect, handleSubmit } = props;
+    useEffect(() => {
+        dispatch(setAutomaticRefresh(props.pristine));
+    }, [dispatch, props.pristine]);
+
+    const { redirect, handleSubmit } = props;
 
     /**
      * We want to let developers define the redirection target from inside the form,

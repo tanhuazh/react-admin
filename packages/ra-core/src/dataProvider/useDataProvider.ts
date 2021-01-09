@@ -15,17 +15,15 @@ import {
 import { FETCH_END, FETCH_ERROR, FETCH_START } from '../actions/fetchActions';
 import { showNotification } from '../actions/notificationActions';
 import { refreshView } from '../actions/uiActions';
-import {
-    ReduxState,
-    DataProvider,
-    DataProviderProxy,
-    UseDataProviderOptions,
-} from '../types';
+import { ReduxState, DataProvider, DataProviderProxy } from '../types';
 import useLogoutIfAccessDenied from '../auth/useLogoutIfAccessDenied';
+import { getDataProviderCallArguments } from './getDataProviderCallArguments';
 
 // List of dataProvider calls emitted while in optimistic mode.
 // These calls get replayed once the dataProvider exits optimistic mode
 const optimisticCalls = [];
+const undoableOptimisticCalls = [];
+let nbRemainingOptimisticCalls = 0;
 
 /**
  * Hook for getting a dataProvider
@@ -45,7 +43,8 @@ const optimisticCalls = [];
  *
  * @example Basic usage
  *
- * import React, { useState } from 'react';
+ * import * as React from 'react';
+import { useState } from 'react';
  * import { useDataProvider } from 'react-admin';
  *
  * const PostList = () => {
@@ -60,7 +59,7 @@ const optimisticCalls = [];
  *          <Fragment>
  *              {posts.map((post, key) => <PostDetail post={post} key={key} />)}
  *          </Fragment>
- *     }
+ *     );
  * }
  *
  * @example Handling all states (loading, error, success)
@@ -127,11 +126,17 @@ const useDataProvider = (): DataProviderProxy => {
     const dataProviderProxy = useMemo(() => {
         return new Proxy(dataProvider, {
             get: (target, name) => {
-                return (
-                    resource: string,
-                    payload: any,
-                    options: UseDataProviderOptions
-                ) => {
+                if (typeof name === 'symbol') {
+                    return;
+                }
+                return (...args) => {
+                    const {
+                        resource,
+                        payload,
+                        allArguments,
+                        options,
+                    } = getDataProviderCallArguments(args);
+
                     const type = name.toString();
                     const {
                         action = 'CUSTOM_FETCH',
@@ -174,14 +179,25 @@ const useDataProvider = (): DataProviderProxy => {
                         rest,
                         store,
                         type,
+                        allArguments,
                         undoable,
                     };
                     if (isOptimistic) {
                         // in optimistic mode, all fetch calls are stacked, to be
                         // executed once the dataProvider leaves optimistic mode.
                         // In the meantime, the admin uses data from the store.
-                        optimisticCalls.push(params);
-                        return Promise.resolve();
+                        if (undoable) {
+                            undoableOptimisticCalls.push(params);
+                        } else {
+                            optimisticCalls.push(params);
+                        }
+                        nbRemainingOptimisticCalls++;
+                        // Return a Promise that only resolves when the optimistic call was made
+                        // otherwise hooks like useQueryWithStore will return loaded = true
+                        // before the content actually reaches the Redux store.
+                        // But as we can't determine when this particular query was finished,
+                        // the Promise resolves only when *all* optimistic queries are done.
+                        return waitFor(() => nbRemainingOptimisticCalls === 0);
                     }
                     return doQuery(params);
                 };
@@ -191,6 +207,18 @@ const useDataProvider = (): DataProviderProxy => {
 
     return dataProviderProxy;
 };
+
+// get a Promise that resolves after a delay in milliseconds
+const later = (delay = 100): Promise<void> =>
+    new Promise(function (resolve) {
+        setTimeout(resolve, delay);
+    });
+
+// get a Promise that resolves once a condition is satisfied
+const waitFor = (condition: () => boolean): Promise<void> =>
+    new Promise(resolve =>
+        condition() ? resolve() : later().then(() => waitFor(condition))
+    );
 
 const doQuery = ({
     type,
@@ -205,6 +233,7 @@ const doQuery = ({
     store,
     undoable,
     logoutIfAccessDenied,
+    allArguments,
 }) => {
     const resourceState = store.getState().admin.resources[resource];
     if (canReplyWithCache(type, payload, resourceState)) {
@@ -231,6 +260,7 @@ const doQuery = ({
               dataProvider,
               dispatch,
               logoutIfAccessDenied,
+              allArguments,
           })
         : performQuery({
               type,
@@ -243,6 +273,7 @@ const doQuery = ({
               dataProvider,
               dispatch,
               logoutIfAccessDenied,
+              allArguments,
           });
 };
 
@@ -266,10 +297,13 @@ const performUndoableQuery = ({
     dataProvider,
     dispatch,
     logoutIfAccessDenied,
-}: QueryFunctionParams) => {
+    allArguments,
+}: QueryFunctionParams): Promise<{}> => {
     dispatch(startOptimisticMode());
     if (window) {
-        window.addEventListener('beforeunload', warnBeforeClosingWindow);
+        window.addEventListener('beforeunload', warnBeforeClosingWindow, {
+            capture: true,
+        });
     }
     dispatch({
         type: action,
@@ -294,7 +328,10 @@ const performUndoableQuery = ({
             if (window) {
                 window.removeEventListener(
                     'beforeunload',
-                    warnBeforeClosingWindow
+                    warnBeforeClosingWindow,
+                    {
+                        capture: true,
+                    }
                 );
             }
             return;
@@ -306,7 +343,13 @@ const performUndoableQuery = ({
         });
         dispatch({ type: FETCH_START });
         try {
-            dataProvider[type](resource, payload)
+            dataProvider[type]
+                .apply(
+                    dataProvider,
+                    typeof resource !== 'undefined'
+                        ? [resource, payload]
+                        : allArguments
+                )
                 .then(response => {
                     if (process.env.NODE_ENV !== 'production') {
                         validateResponseFormat(response, type);
@@ -326,7 +369,10 @@ const performUndoableQuery = ({
                     if (window) {
                         window.removeEventListener(
                             'beforeunload',
-                            warnBeforeClosingWindow
+                            warnBeforeClosingWindow,
+                            {
+                                capture: true,
+                            }
                         );
                     }
                     replayOptimisticCalls();
@@ -335,7 +381,10 @@ const performUndoableQuery = ({
                     if (window) {
                         window.removeEventListener(
                             'beforeunload',
-                            warnBeforeClosingWindow
+                            warnBeforeClosingWindow,
+                            {
+                                capture: true,
+                            }
                         );
                     }
                     if (process.env.NODE_ENV !== 'production') {
@@ -380,13 +429,38 @@ const warnBeforeClosingWindow = event => {
 };
 
 // Replay calls recorded while in optimistic mode
-const replayOptimisticCalls = () => {
-    Promise.all(
-        optimisticCalls.map(params =>
-            Promise.resolve(doQuery.call(null, params))
-        )
-    );
-    optimisticCalls.splice(0, optimisticCalls.length);
+const replayOptimisticCalls = async () => {
+    let clone;
+
+    // We must perform any undoable queries first so that the effects of previous undoable
+    // queries do not conflict with this one.
+
+    // We only handle all side effects queries if there are no more undoable queries
+    if (undoableOptimisticCalls.length > 0) {
+        clone = [...undoableOptimisticCalls];
+        // remove these calls from the list *before* doing them
+        // because side effects in the calls can add more calls
+        // so we don't want to erase these.
+        undoableOptimisticCalls.splice(0, undoableOptimisticCalls.length);
+
+        await Promise.all(
+            clone.map(params => Promise.resolve(doQuery.call(null, params)))
+        );
+        // once the calls are finished, decrease the number of remaining calls
+        nbRemainingOptimisticCalls -= clone.length;
+    } else {
+        clone = [...optimisticCalls];
+        // remove these calls from the list *before* doing them
+        // because side effects in the calls can add more calls
+        // so we don't want to erase these.
+        optimisticCalls.splice(0, optimisticCalls.length);
+
+        await Promise.all(
+            clone.map(params => Promise.resolve(doQuery.call(null, params)))
+        );
+        // once the calls are finished, decrease the number of remaining calls
+        nbRemainingOptimisticCalls -= clone.length;
+    }
 };
 
 /**
@@ -406,7 +480,8 @@ const performQuery = ({
     dataProvider,
     dispatch,
     logoutIfAccessDenied,
-}: QueryFunctionParams) => {
+    allArguments,
+}: QueryFunctionParams): Promise<any> => {
     dispatch({
         type: action,
         payload,
@@ -418,8 +493,15 @@ const performQuery = ({
         meta: { resource, ...rest },
     });
     dispatch({ type: FETCH_START });
+
     try {
-        return dataProvider[type](resource, payload)
+        return dataProvider[type]
+            .apply(
+                dataProvider,
+                typeof resource !== 'undefined'
+                    ? [resource, payload]
+                    : allArguments
+            )
             .then(response => {
                 if (process.env.NODE_ENV !== 'production') {
                     validateResponseFormat(response, type);
@@ -517,6 +599,7 @@ interface QueryFunctionParams {
     dataProvider: DataProvider;
     dispatch: Dispatch;
     logoutIfAccessDenied: (error?: any) => Promise<boolean>;
+    allArguments: any[];
 }
 
 export default useDataProvider;

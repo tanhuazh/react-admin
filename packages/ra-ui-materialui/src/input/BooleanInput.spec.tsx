@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 import { Form } from 'react-final-form';
 
@@ -108,10 +108,11 @@ describe('<BooleanInput />', () => {
             'resources.posts.fields.isPublished'
         ) as HTMLInputElement;
 
+        input.focus();
         fireEvent.click(input);
         expect(input.checked).toBe(false);
+        input.blur();
 
-        fireEvent.blur(input);
         expect(queryAllByText('ra.validation.error')).toHaveLength(1);
     });
 });

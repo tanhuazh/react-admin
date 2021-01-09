@@ -1,63 +1,56 @@
-import React, { useCallback, FunctionComponent } from 'react';
+import * as React from 'react';
+import { useCallback, FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import MenuItem from '@material-ui/core/MenuItem';
+import { TextFieldProps } from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 import {
     useInput,
     FieldTitle,
     useTranslate,
-    InputProps,
-    ChoicesProps,
+    ChoicesInputProps,
     useChoices,
+    warning,
 } from 'ra-core';
 
 import ResettableTextField from './ResettableTextField';
 import InputHelperText from './InputHelperText';
-import { TextFieldProps } from '@material-ui/core/TextField';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 
 const sanitizeRestProps = ({
     addLabel,
-    allowEmpty,
-    alwaysOn,
-    emptyValue,
-    basePath,
+    afterSubmit,
+    allowNull,
+    beforeSubmit,
     choices,
     className,
-    component,
     crudGetMatching,
     crudGetOne,
-    defaultValue,
+    data,
     filter,
     filterToQuery,
-    formClassName,
-    initializeForm,
-    initialValue,
-    input,
-    isRequired,
-    label,
-    locale,
-    meta,
-    onChange,
-    options,
-    optionValue,
-    optionText,
-    disableValue,
+    formatOnBlur,
+    isEqual,
+    limitChoicesToValue,
+    multiple,
+    name,
+    pagination,
     perPage,
-    record,
+    ref,
     reference,
-    resource,
+    render,
     setFilter,
     setPagination,
     setSort,
     sort,
-    source,
-    textAlign,
-    translate,
-    translateChoice,
+    subscription,
+    type,
+    validateFields,
     validation,
+    value,
     ...rest
-}: any) => rest;
+}: any) => sanitizeInputRestProps(rest);
 
 const useStyles = makeStyles(
     theme => ({
@@ -75,7 +68,7 @@ const useStyles = makeStyles(
  *
  * By default, the options are built from:
  *  - the 'id' property as the option value,
- *  - the 'name' property an the option text
+ *  - the 'name' property as the option text
  * @example
  * const choices = [
  *    { id: 'M', name: 'Male' },
@@ -143,8 +136,7 @@ const useStyles = makeStyles(
  *
  */
 const SelectInput: FunctionComponent<
-    ChoicesProps &
-        InputProps<TextFieldProps> &
+    ChoicesInputProps<TextFieldProps> &
         Omit<TextFieldProps, 'label' | 'helperText'>
 > = props => {
     const {
@@ -173,6 +165,17 @@ const SelectInput: FunctionComponent<
     } = props;
     const translate = useTranslate();
     const classes = useStyles(props);
+
+    warning(
+        source === undefined,
+        `If you're not wrapping the SelectInput inside a ReferenceInput, you must provide the source prop`
+    );
+
+    warning(
+        choices === undefined,
+        `If you're not wrapping the SelectInput inside a ReferenceInput, you must provide the choices prop`
+    );
+
     const { getChoiceText, getChoiceValue } = useChoices({
         optionText,
         optionValue,

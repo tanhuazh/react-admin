@@ -1,37 +1,30 @@
-import React, { Children, cloneElement, FC, memo, ReactElement } from 'react';
+import * as React from 'react';
+import { Children, cloneElement, FC, memo, ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import get from 'lodash/get';
 import { makeStyles } from '@material-ui/core/styles';
+import { Typography } from '@material-ui/core';
 import ErrorIcon from '@material-ui/icons/Error';
 import {
     useReference,
     UseReferenceProps,
     getResourceLinkPath,
     LinkToType,
+    ResourceContextProvider,
+    Record,
 } from 'ra-core';
 
 import LinearProgress from '../layout/LinearProgress';
 import Link from '../Link';
-import sanitizeRestProps from './sanitizeRestProps';
-import { ClassNameMap } from '@material-ui/styles';
-import { FieldProps, InjectedFieldProps } from './types';
-
-interface ReferenceFieldProps extends FieldProps, InjectedFieldProps {
-    children: ReactElement;
-    classes?: Partial<ClassNameMap<ReferenceFieldClassKey>>;
-    reference: string;
-    resource?: string;
-    source: string;
-    translateChoice?: Function | boolean;
-    linkType?: LinkToType;
-    link?: LinkToType;
-}
+import sanitizeFieldRestProps from './sanitizeFieldRestProps';
+import { PublicFieldProps, fieldPropTypes, InjectedFieldProps } from './types';
+import { ClassesOverride } from '../types';
 
 /**
  * Fetch reference record, and delegate rendering to child component.
  *
- * The reference prop sould be the name of one of the <Resource> components
+ * The reference prop should be the name of one of the <Resource> components
  * added as <Admin> child.
  *
  * @example
@@ -64,7 +57,7 @@ interface ReferenceFieldProps extends FieldProps, InjectedFieldProps {
  * as arguments and return a string
  *
  * @example
- * <ReferenceField label="User" source="userId" reference="users" link={(reference, record) => "/path/to/${reference}/${record}"}>
+ * <ReferenceField label="User" source="userId" reference="users" link={(record, reference) => "/path/to/${reference}/${record}"}>
  *     <TextField source="name" />
  * </ReferenceField>
  *
@@ -72,38 +65,21 @@ interface ReferenceFieldProps extends FieldProps, InjectedFieldProps {
  * In previous versions of React-Admin, the prop `linkType` was used. It is now deprecated and replaced with `link`. However
  * backward-compatibility is still kept
  */
-
 const ReferenceField: FC<ReferenceFieldProps> = ({
-    children,
     record,
     source,
+    emptyText,
     ...props
-}) => {
-    if (React.Children.count(children) !== 1) {
-        throw new Error('<ReferenceField> only accepts a single child');
-    }
-    const { basePath, resource } = props;
-    const resourceLinkPath = getResourceLinkPath({
-        ...props,
-        resource,
-        record,
-        source,
-        basePath,
-    });
-
-    return (
-        <PureReferenceFieldView
-            {...props}
-            {...useReference({
-                reference: props.reference,
-                id: get(record, source),
-            })}
-            resourceLinkPath={resourceLinkPath}
-        >
-            {children}
-        </PureReferenceFieldView>
+}) =>
+    get(record, source) == null ? (
+        emptyText ? (
+            <Typography component="span" variant="body2">
+                {emptyText}
+            </Typography>
+        ) : null
+    ) : (
+        <NonEmptyReferenceField {...props} record={record} source={source} />
     );
-};
 
 ReferenceField.propTypes = {
     addLabel: PropTypes.bool,
@@ -118,6 +94,7 @@ ReferenceField.propTypes = {
     reference: PropTypes.string.isRequired,
     resource: PropTypes.string,
     sortBy: PropTypes.string,
+    sortByOrder: fieldPropTypes.sortByOrder,
     source: PropTypes.string.isRequired,
     translateChoice: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
     linkType: PropTypes.oneOfType([
@@ -138,6 +115,55 @@ ReferenceField.defaultProps = {
     link: 'edit',
 };
 
+export interface ReferenceFieldProps<RecordType extends Record = Record>
+    extends PublicFieldProps,
+        InjectedFieldProps<RecordType> {
+    children: ReactElement;
+    classes?: ClassesOverride<typeof useStyles>;
+    reference: string;
+    resource?: string;
+    source: string;
+    translateChoice?: Function | boolean;
+    linkType?: LinkToType;
+    link?: LinkToType;
+}
+
+/**
+ * This intermediate component is made necessary by the useReference hook,
+ * which cannot be called conditionally when get(record, source) is empty.
+ */
+export const NonEmptyReferenceField: FC<Omit<
+    ReferenceFieldProps,
+    'emptyText'
+>> = ({ children, record, source, ...props }) => {
+    if (React.Children.count(children) !== 1) {
+        throw new Error('<ReferenceField> only accepts a single child');
+    }
+    const { basePath, resource, reference } = props;
+    const resourceLinkPath = getResourceLinkPath({
+        ...props,
+        resource,
+        record,
+        source,
+        basePath,
+    });
+
+    return (
+        <ResourceContextProvider value={reference}>
+            <PureReferenceFieldView
+                {...props}
+                {...useReference({
+                    reference,
+                    id: get(record, source),
+                })}
+                resourceLinkPath={resourceLinkPath}
+            >
+                {children}
+            </PureReferenceFieldView>
+        </ResourceContextProvider>
+    );
+};
+
 const useStyles = makeStyles(
     theme => ({
         link: {
@@ -149,20 +175,6 @@ const useStyles = makeStyles(
 
 // useful to prevent click bubbling in a datagrid with rowClick
 const stopPropagation = e => e.stopPropagation();
-
-type ReferenceFieldClassKey = 'link';
-
-interface ReferenceFieldViewProps
-    extends FieldProps,
-        InjectedFieldProps,
-        UseReferenceProps {
-    classes?: Partial<ClassNameMap<ReferenceFieldClassKey>>;
-    reference: string;
-    resource?: string;
-    translateChoice?: Function | boolean;
-    resourceLinkPath?: ReturnType<typeof getResourceLinkPath>;
-    children?: ReactElement;
-}
 
 export const ReferenceFieldView: FC<ReferenceFieldViewProps> = props => {
     const {
@@ -183,16 +195,20 @@ export const ReferenceFieldView: FC<ReferenceFieldViewProps> = props => {
         ...rest
     } = props;
     const classes = useStyles(props);
+
     if (!loaded) {
         return <LinearProgress />;
     }
     if (error) {
         return (
+            /* eslint-disable jsx-a11y/role-supports-aria-props */
             <ErrorIcon
                 aria-errormessage={error.message ? error.message : error}
+                role="presentation"
                 color="error"
                 fontSize="small"
             />
+            /* eslint-enable */
         );
     }
     if (!referenceRecord) {
@@ -215,7 +231,7 @@ export const ReferenceFieldView: FC<ReferenceFieldViewProps> = props => {
                     resource: reference,
                     basePath,
                     translateChoice,
-                    ...sanitizeRestProps(rest),
+                    ...sanitizeFieldRestProps(rest),
                 })}
             </Link>
         );
@@ -226,7 +242,7 @@ export const ReferenceFieldView: FC<ReferenceFieldViewProps> = props => {
         resource: reference,
         basePath,
         translateChoice,
-        ...sanitizeRestProps(rest),
+        ...sanitizeFieldRestProps(rest),
     });
 };
 
@@ -247,6 +263,18 @@ ReferenceFieldView.propTypes = {
     source: PropTypes.string,
     translateChoice: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
 };
+
+export interface ReferenceFieldViewProps
+    extends PublicFieldProps,
+        InjectedFieldProps,
+        UseReferenceProps {
+    classes?: ClassesOverride<typeof useStyles>;
+    reference: string;
+    resource?: string;
+    translateChoice?: Function | boolean;
+    resourceLinkPath?: ReturnType<typeof getResourceLinkPath>;
+    children?: ReactElement;
+}
 
 const PureReferenceFieldView = memo(ReferenceFieldView);
 

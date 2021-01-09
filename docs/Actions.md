@@ -5,7 +5,7 @@ title: "Querying the API"
 
 # Querying the API
 
-Admin interfaces often have to query the API beyond CRUD requests. For instance, a user profile page may need to get the User object based on a user id. Or, users may want to an "Approve" a comment by pressing a button, and this action should update the `is_approved` property and save the updated record in one click.
+Admin interfaces often have to query the API beyond CRUD requests. For instance, a user profile page may need to get the User object based on a user id. Or, users may want to "Approve" a comment by pressing a button, and this action should update the `is_approved` property and save the updated record in one click.
 
 React-admin provides special hooks to emit read and write queries to the [`dataProvider`](./DataProviders.md), which in turn sends requests to your API.
 
@@ -16,7 +16,8 @@ React-admin stores the `dataProvider` object in a React context, so it's availab
 For instance, here is how to query the Data Provider for the current user profile:
 
 ```jsx
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useDataProvider, Loading, Error } from 'react-admin';
 
 const UserProfile = ({ userId }) => {
@@ -58,7 +59,7 @@ The `useQuery` hook calls the Data Provider on mount, and returns an object that
 For instance, the previous code snippet can be rewritten with `useQuery` as follows:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useQuery, Loading, Error } from 'react-admin';
 
 const UserProfile = ({ userId }) => {
@@ -85,7 +86,7 @@ const UserProfile = ({ userId }) => {
 
 - `type`: The method to call on the Data Provider, e.g. `getList`
 - `resource`: The Resource name, e.g. "posts"
-- `params`: The query parameters. Depends on the query type.
+- `payload`: The query parameters. Depends on the query type.
 
 The return value of `useQuery` is an object representing the query state, using the following keys:
 
@@ -103,21 +104,21 @@ This object updates according to the request state:
 
 As a reminder, here are the read query types handled by Data Providers:
 
-Type               | Usage                                           | Params format              | Response format
------------------- | ------------------------------------------------|--------------------------- | ---------------
-`getList`          | Search for resources                            | `{ pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }` | `{ data: {Record[]}, total: {int} }`
-`getOne`           | Read a single resource, by id                   | `{ id: {mixed} }`          | `{ data: {Record} }`
-`getMany`          | Read a list of resource, by ids                 | `{ ids: {mixed[]} }`       | `{ data: {Record[]} }`
-`getManyReference` | Read a list of resources related to another one | `{ target: {string}, id: {mixed}, pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }`     | `{ data: {Record[]} }`
+| Type               | Usage                                           | Params format                                                                                                                                   | Response format                      |
+| ------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `getList`          | Search for resources                            | `{ pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }`                                | `{ data: {Record[]}, total: {int} }` |
+| `getOne`           | Read a single resource, by id                   | `{ id: {mixed} }`                                                                                                                               | `{ data: {Record} }`                 |
+| `getMany`          | Read a list of resource, by ids                 | `{ ids: {mixed[]} }`                                                                                                                            | `{ data: {Record[]} }`               |
+| `getManyReference` | Read a list of resources related to another one | `{ target: {string}, id: {mixed}, pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }` | `{ data: {Record[]} }`               |
 
 ## `useQueryWithStore` Hook
 
-React-admin exposes a more powerful version of `useQuery`. `useQueryWithStore` persist the response from the `dataProvider` in the internal react-admin Redux store, so that result remains available if the hook is called again in the future.  
+React-admin exposes a more powerful version of `useQuery`. `useQueryWithStore` persist the response from the `dataProvider` in the internal react-admin Redux store, so that result remains available if the hook is called again in the future.
 
 You can use this hook to show the cached result immediately on mount, while the updated result is fetched from the API. This is called optimistic rendering.
 
 ```diff
-import React from 'react';
+import * as React from "react";
 -import { useQuery, Loading, Error } from 'react-admin';
 +import { useQueryWithStore, Loading, Error } from 'react-admin';
 
@@ -143,7 +144,7 @@ In practice, react-admin uses `useQueryWithStore` instead of `useQuery` everywhe
 Here is an implementation of an "Approve" button:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useMutation, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -160,7 +161,7 @@ const ApproveButton = ({ record }) => {
 
 - `type`: The method to call on the Data Provider, e.g. `update`
 - `resource`: The Resource name, e.g. "posts"
-- `params`: The query parameters. Depends on the query type.
+- `payload`: The query parameters. Depends on the query type.
 
 The return value of `useMutation` is an array with the following items:
 
@@ -182,18 +183,18 @@ You can destructure the return value of the `useMutation` hook as `[mutate,  { d
 
 As a reminder, here are the write query types handled by data providers:
 
-Type         | Usage                     | Params format                             | Response format
------------- | --------------------------|------------------------------------------ | ---------------
-`create`     | Create a single resource  | `{ data: {Object} }`                      | `{ data: {Record} }`
-`update`     | Update a single resource  | `{ id: {mixed}, data: {Object}, previousData: {Object} }` | `{ data: {Record} }`
-`updateMany` | Update multiple resources | `{ ids: {mixed[]}, data: {Object} }`      | `{ data: {mixed[]} }` The ids which have been updated
-`delete`     | Delete a single resource  | `{ id: {mixed}, previousData: {Object} }` | `{ data: {Record} }`
-`deleteMany` | Delete multiple resources | `{ ids: {mixed[]} }`                      | `{ data: {mixed[]} }` The ids which have been deleted
+| Type         | Usage                     | Params format                                             | Response format                                       |
+| ------------ | ------------------------- | --------------------------------------------------------- | ----------------------------------------------------- |
+| `create`     | Create a single resource  | `{ data: {Object} }`                                      | `{ data: {Record} }`                                  |
+| `update`     | Update a single resource  | `{ id: {mixed}, data: {Object}, previousData: {Object} }` | `{ data: {Record} }`                                  |
+| `updateMany` | Update multiple resources | `{ ids: {mixed[]}, data: {Object} }`                      | `{ data: {mixed[]} }` The ids which have been updated |
+| `delete`     | Delete a single resource  | `{ id: {mixed}, previousData: {Object} }`                 | `{ data: {Record} }`                                  |
+| `deleteMany` | Delete multiple resources | `{ ids: {mixed[]} }`                                      | `{ data: {mixed[]} }` The ids which have been deleted |
 
 `useMutation` accepts a variant call where the parameters are passed to the callback instead of when calling the hook. Use this variant when some parameters are only known at call time.
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useMutation, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -225,7 +226,7 @@ React-admin provides one hook for each of the Data Provider methods. Based on `u
 For instance, here is an example using `useUpdate()`:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useUpdate, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -234,29 +235,187 @@ const ApproveButton = ({ record }) => {
 };
 ```
 
-The specialized hooks based on `useQuery` execute on mount:
+The specialized hooks based on `useQuery` (`useGetList`, `useGetOne`, `useGetMany`, `useGetManyReference`) execute on mount. The specialized hooks based on `useMutation` (`useCreate`, `useUpdate`, `useUpdateMany`, `useDelete`, `useDeleteMany`) return a callback.
 
-* `useGetList(resource, pagination, sort, filters)`
-* `useGetOne(resource, id)`
-* `useGetMany(resource, ids)`
-* `useGetManyReference(resource, target, id, pagination, sort, filter, referencingResource)`
+### `useGetList`
 
-The specialized hooks based on `useMutation` return a callback:
+```jsx
+// syntax
+const { data, ids, total, loading, loaded, error } = useGetList(resource, pagination, sort, filter, options);
 
-* `useCreate(resource, data)`
-* `useUpdate(resource, id, data, previousData)`
-* `useUpdateMany(resource, ids, data)`
-* `useDelete(resource, id)`
-* `useDeleteMany(resource, ids)`
+// example
+import { useGetList } from 'react-admin';
+const LatestNews = () => {
+    const { data, ids, loading, error } = useGetList(
+        'posts',
+        { page: 1, perPage: 10 },
+        { field: 'published_at', order: 'DESC' }
+    );
+    if (loading) { return <Loading />; }
+    if (error) { return <p>ERROR</p>; }
+    return (
+        <ul>
+            {ids.map(id =>
+                <li key={id}>{data[id].title}</li>
+            )}
+        </ul>
+    );
+};
+```
+
+### `useGetOne`
+
+```jsx
+// syntax
+const { data, loading, loaded, error } = useGetOne(resource, id, options);
+
+// example
+import { useGetOne } from 'react-admin';
+const UserProfile = ({ record }) => {
+    const { data, loading, error } = useGetOne('users', record.id);
+    if (loading) { return <Loading />; }
+    if (error) { return <p>ERROR</p>; }
+    return <div>User {data.username}</div>;
+};
+```
+
+### `useGetMany`
+
+```jsx
+// syntax
+const { data, loading, loaded, error } = useGetMany(resource, ids, options);
+
+// example
+import { useGetMany } from 'react-admin';
+const PostTags = ({ record }) => {
+    const { data, loading, error } = useGetMany('tags', record.tagIds);
+    if (loading) { return <Loading />; }
+    if (error) { return <p>ERROR</p>; }
+    return (
+         <ul>
+             {data.map(tag => (
+                 <li key={tag.id}>{tag.name}</li>
+             ))}
+         </ul>
+     );
+};
+```
+
+### `useGetManyReference`
+
+```jsx
+// syntax
+const { data, ids, total, loading, loaded, error } = useGetManyReference(resource, target, id, pagination, sort, filter, referencingResource, options);
+
+// example
+import { useGetManyReference } from 'react-admin';
+const PostComments = ({ post_id }) => {
+    const { data, ids, loading, error } = useGetManyReference(
+        'comments',
+        'post_id',
+        post_id,
+        { page: 1, perPage: 10 },
+        { field: 'published_at', order: 'DESC' },
+        {},
+        'posts',
+    );
+    if (loading) { return <Loading />; }
+    if (error) { return <p>ERROR</p>; }
+    return (
+        <ul>
+            {ids.map(id =>
+                <li key={id}>{data[id].body}</li>
+            )}
+        </ul>
+    );
+};
+```
+
+### `useCreate`
+
+```jsx
+// syntax
+const [create, { data, loading, loaded, error }] = useCreate(resource, data, options);
+
+// example
+import { useCreate } from 'react-admin';
+const LikeButton = ({ record }) => {
+    const like = { postId: record.id };
+    const [create, { loading, error }] = useCreate('likes', like);
+    if (error) { return <p>ERROR</p>; }
+    return <button disabled={loading} onClick={create}>Like</button>;
+};
+```
+
+### `useUpdate`
+
+```jsx
+// syntax
+const [update, { data, loading, loaded, error }] = useUpdate(resource, id, data, previousData, options);
+
+// example
+import { useUpdate } from 'react-admin';
+const IncreaseLikeButton = ({ record }) => {
+    const diff = { likes: record.likes + 1 };
+    const [update, { loading, error }] = useUpdate('likes', record.id, diff, record);
+    if (error) { return <p>ERROR</p>; }
+    return <button disabled={loading} onClick={update}>Like</button>;
+};
+```
+
+### `useUpdateMany`
+
+```jsx
+// syntax
+const [updateMany, { data, loading, loaded, error }] = useUpdateMany(resource, ids, data, options);
+
+// example
+import { useUpdateMany } from 'react-admin';
+const BulkResetViewsButton = ({ selectedIds }) => {
+    const [updateMany, { loading, error }] = useUpdateMany('posts', selectedIds, { views: 0 });
+    if (error) { return <p>ERROR</p>; }
+    return <button disabled={loading} onClick={updateMany}>Reset views</button>;
+};
+```
+
+### `useDelete`
+
+```jsx
+// syntax
+const [deleteOne, { data, loading, loaded, error }] = useDelete(resource, id, previousData, options);
+
+// example
+import { useDelete } from 'react-admin';
+const DeleteButton = ({ record }) => {
+    const [deleteOne, { loading, error }] = useDelete('likes', record.id);
+    if (error) { return <p>ERROR</p>; }
+    return <button disabled={loading} onClick={deleteOne}>Delete</button>;
+};
+```
+
+### `useDeleteMany`
+
+```jsx
+// syntax
+const [deleteOne, { data, loading, loaded, error }] = useDeleteMany(resource, ids, options);
+
+// example
+import { useDeleteMany } from 'react-admin';
+const BulkDeletePostsButton = ({ selectedIds }) => {
+    const [deleteMany, { loading, error }] = useDeleteMany('posts', selectedIds);
+    if (error) { return <p>ERROR</p>; }
+    return <button disabled={loading} onClick={deleteMany}>Delete selected posts</button>;
+};
+```
 
 ## Handling Side Effects In `useDataProvider`
 
-`useDataProvider` returns a `dataProvider` object. Each call to its method return a Promise, allowing to add business logic on success in `then()`, and on failure in `catch()`.
+`useDataProvider` returns a `dataProvider` object. Each call to its method return a Promise, allowing adding business logic on success in `then()`, and on failure in `catch()`.
 
 For instance, here is another version of the `<ApproveButton>`  based on `useDataProvider` that notifies the user of success or failure using the bottom notification banner:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useDataProvider, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -281,7 +440,7 @@ const ApproveButton = ({ record }) => {
 
 Fetching data is called a *side effect*, since it calls the outside world, and is asynchronous. Usual actions may have other side effects, like showing a notification, or redirecting the user to another page. React-admin provides the following hooks to handle most common side effects:
 
-- `useNotify`: Return a function to display a notification. The arguments should be a message (it can be a translation key), a level (either `info` or `warning`), an options object to pass to the `translate()` function (in the case of the default i18n provider, using Polyglot.js, it will be the interpolation options used for passing variables), a boolean to set to `true` if the notification should contain an "undo" button and a number corresponding to the notification duration.
+- `useNotify`: Return a function to display a notification. The arguments should be a message (it can be a translation key), a level (either `info` or `warning`), an `options` object to pass to the `translate` function (in the case of the default i18n provider, using Polyglot.js, it will be the interpolation options used for passing variables), a boolean to set to `true` if the notification should contain an "undo" button and a number corresponding to the notification duration.
 - `useRedirect`: Return a function to redirect the user to another page. The arguments should be the path to redirect the user to, and the current `basePath`.
 - `useRefresh`: Return a function to force a rerender of the current view (equivalent to pressing the Refresh button).
 - `useUnselectAll`: Return a function to unselect all lines in the current `Datagrid`. Pass the name of the resource as argument.
@@ -293,7 +452,7 @@ But the other hooks presented in this chapter, starting with `useMutation`, don'
 So the `<ApproveButton>` written with `useMutation` instead of `useDataProvider` can specify side effects as follows:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useMutation, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -325,10 +484,10 @@ For its own fetch actions, react-admin uses an approach called *optimistic rende
 
 As a bonus, while the success notification is displayed, users have the ability to cancel the action *before* the data provider is even called.
 
-You can benefit from optimistic rendering when you call the `useMutation` hook, too. You just need to pass `undoable: true` in the options parameter:
+You can benefit from optimistic rendering when you call the `useMutation` hook, too. You just need to pass `undoable: true` in the `options` parameter:
 
 ```diff
-import React from 'react';
+import * as React from "react";
 import { useMutation, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -359,7 +518,7 @@ As you can see in this example, you need to tweak the notification for undoable 
 You can pass the `{ undoable: true }` options parameter to specialized hooks, too. they all accept an optional last argument with side effects.
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { useUpdate, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -369,6 +528,7 @@ const ApproveButton = ({ record }) => {
         'comments',
         record.id,
         { isApproved: true },
+        record,
         {
             undoable: true,
             onSuccess: ({ data }) => {
@@ -393,7 +553,7 @@ The `useDataProvider` hook dispatches redux actions on load, on success, and on 
 React-admin doesn't have any reducer watching these actions. You can write a custom reducer for these actions to store the return of the Data Provider in Redux. But the best way to do so is to set the hooks dispatch a custom action instead of `CUSTOM_FETCH`. Use the `action` option for that purpose: 
 
 ```diff
-import React from 'react';
+import * as React from "react";
 import { useUpdate, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -427,7 +587,7 @@ You can fetch and display a user profile using the `<Query>` component, which us
 
 {% raw %}
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Query, Loading, Error } from 'react-admin';
 
 const UserProfile = ({ record }) => (
@@ -445,7 +605,7 @@ const UserProfile = ({ record }) => (
 Or, query a user list on the dashboard with the same `<Query>` component:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Query, Loading, Error } from 'react-admin';
 
 const payload = {
@@ -480,7 +640,7 @@ When calling the API to update ("mutate") data, use the `<Mutation>` component i
 Here is a version of the `<ApproveButton>` component demonstrating `<Mutation>`:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Mutation, useNotify, useRedirect, Button } from 'react-admin';
 
 const ApproveButton = ({ record }) => {
@@ -557,13 +717,14 @@ Note that these components are implemented in react-admin using the hooks descri
 
 ## Querying The API With `fetch`
 
-`useQuery`, `useMutation` and `useDataProvider` are "the react-admin way" to query the API, but nothing prevents you from using `fetch` if you want. For instance, when you don't want to add some routing logic to the data provider for a RPC method on your API, that makes perfect sense.
+`useQuery`, `useMutation` and `useDataProvider` are "the react-admin way" to query the API, but nothing prevents you from using `fetch` if you want. For instance, when you don't want to add some routing logic to the data provider for an RPC method on your API, that makes perfect sense.
 
 There is no special react-admin sauce in that case. Here is an example implementation of calling `fetch` in a component:
 
 ```jsx
 // in src/comments/ApproveButton.js
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNotify, useRedirect, fetchStart, fetchEnd, Button } from 'react-admin';
 

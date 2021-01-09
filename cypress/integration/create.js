@@ -67,6 +67,7 @@ describe('Create Page', () => {
     it('should have a working array input with references', () => {
         CreatePage.logout();
         LoginPage.login('admin', 'password');
+        CreatePage.navigate();
         CreatePage.waitUntilVisible();
         cy.get(CreatePage.elements.addAuthor).click();
         cy.get(CreatePage.elements.input('authors[0].user_id')).should(
@@ -80,6 +81,7 @@ describe('Create Page', () => {
     it('should have a working array input with a scoped FormDataConsumer', () => {
         CreatePage.logout();
         LoginPage.login('admin', 'password');
+        CreatePage.navigate();
         CreatePage.waitUntilVisible();
         cy.get(CreatePage.elements.addAuthor).click();
         CreatePage.setValues([
@@ -280,6 +282,7 @@ describe('Create Page', () => {
     it('should not reset the form value when switching tabs', () => {
         CreatePage.logout();
         LoginPage.login('admin', 'password');
+        CreatePage.navigate();
         CreatePage.waitUntilVisible();
         UserCreatePage.navigate();
 
@@ -302,6 +305,14 @@ describe('Create Page', () => {
     });
 
     it('should show rich text input error message when form is submitted', () => {
+        const values = [
+            {
+                type: 'input',
+                name: 'title',
+                value: 'Test title',
+            },
+        ];
+        CreatePage.setValues(values);
         CreatePage.submit();
         cy.get(CreatePage.elements.richTextInputError)
             .should('exist')
@@ -309,6 +320,14 @@ describe('Create Page', () => {
     });
 
     it('should not show rich text input error message when form is submitted and input is filled with text', () => {
+        const values = [
+            {
+                type: 'input',
+                name: 'title',
+                value: 'Test title',
+            },
+        ];
+        CreatePage.setValues(values);
         CreatePage.submit();
         cy.get(CreatePage.elements.richTextInputError)
             .should('exist')

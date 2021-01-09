@@ -2,7 +2,7 @@
 
 A frontend Framework for building admin applications running in the browser on top of REST/GraphQL services, using ES6, [React](https://facebook.github.io/react/) and [Material Design](https://material.io/). Open sourced and maintained by [marmelab](https://marmelab.com/).
 
-[Demo](https://marmelab.com/react-admin-demo/) - [Documentation](https://marmelab.com/react-admin/) - [Releases](https://github.com/marmelab/react-admin/releases) - [Support](http://stackoverflow.com/questions/tagged/react-admin)
+[Demo](https://marmelab.com/react-admin-demo/) - [Documentation](https://marmelab.com/react-admin/) - [Releases](https://github.com/marmelab/react-admin/releases) - [Support](https://stackoverflow.com/questions/tagged/react-admin)
 
 [![react-admin-demo](https://marmelab.com/react-admin/img/react-admin-demo-still.png)](https://vimeo.com/205118063)
 
@@ -27,7 +27,7 @@ A frontend Framework for building admin applications running in the browser on t
 * Super easy to extend and override (it's just React components)
 * Highly customizable interface
 * Can connect to multiple backends
-* Leverages the best libraries in the React ecosystem (Redux, redux-form, redux-saga, material-ui, recompose)
+* Leverages the best libraries in the React ecosystem (Redux, redux-form, redux-saga, material-ui)
 * Can be included in another React app
 * Inspired by the popular [ng-admin](https://github.com/marmelab/ng-admin) library (also by marmelab)
 
@@ -50,13 +50,13 @@ npm install --save-dev react-admin
 
 ## Documentation
 
-Read the [Tutorial](http://marmelab.com/react-admin/Tutorial.html) for a 15 minutes introduction. After that, head to the [Documentation](http://marmelab.com/react-admin/index.html), or checkout the [source code of the demo](https://github.com/marmelab/react-admin-demo) for an example usage.
+Read the [Tutorial](https://marmelab.com/react-admin/Tutorial.html) for a 15 minutes introduction. After that, head to the [Documentation](https://marmelab.com/react-admin/Readme.html), or checkout the [source code of the demo](https://github.com/marmelab/react-admin-demo) for an example usage.
 
 ## At a Glance
 
 ```jsx
 // in app.js
-import React from 'react';
+import * as React from "react";
 import { render } from 'react-dom';
 import { Admin, Resource } from 'react-admin';
 import restProvider from 'ra-data-simple-rest';
@@ -75,7 +75,7 @@ The `<Resource>` component is a configuration component that allows to define su
 
 ```jsx
 // in posts.js
-import React from 'react';
+import * as React from "react";
 import { List, Datagrid, Edit, Create, SimpleForm, DateField, TextField, EditButton, TextInput, DateInput } from 'react-admin';
 export PostIcon from '@material-ui/core/svg-icons/action/book';
 
@@ -123,7 +123,7 @@ export const PostCreate = (props) => (
 );
 ```
 
-## Does It Work With My API?
+## Does It Work With My API
 
 Yes.
 
@@ -135,7 +135,7 @@ See the [Data Providers documentation](https://marmelab.com/react-admin/DataProv
 
 ## Batteries Included But Removable
 
-React-admin is designed as a library of loosely coupled React components built on top of [material-ui](http://www.material-ui.com/#/), in addition to controller functions implemented the Redux way. It is very easy to replace one part of react-admin with your own, e.g. to use a custom datagrid, GraphQL instead of REST, or bootstrap instead of Material Design.
+React-admin is designed as a library of loosely coupled React components built on top of [material-ui](https://www.material-ui.com/#/), in addition to controller functions implemented the Redux way. It is very easy to replace one part of react-admin with your own, e.g. to use a custom datagrid, GraphQL instead of REST, or bootstrap instead of Material Design.
 
 ## Run the example
 
@@ -198,8 +198,8 @@ $ npm run
 
 ## License
 
-React-admin is licensed under the [MIT License](https://github.com/marmelab/react-admin/blob/master/LICENSE.md), sponsored and supported by [marmelab](http://marmelab.com).
+React-admin is licensed under the [MIT License](https://github.com/marmelab/react-admin/blob/master/LICENSE.md), sponsored and supported by [marmelab](https://marmelab.com).
 
 ## Donate
 
-This library is free to use, even for commercial purpose. If you want to give back, please talk about it, [help newcomers](https://stackoverflow.com/questions/tagged/react-admin), or contribute code. But the best way to give back is to **donate to a charity**. We recommend [Doctors Without Borders](http://www.doctorswithoutborders.org/).
+This library is free to use, even for commercial purpose. If you want to give back, please talk about it, [help newcomers](https://stackoverflow.com/questions/tagged/react-admin), or contribute code. But the best way to give back is to **donate to a charity**. We recommend [Doctors Without Borders](https://www.doctorswithoutborders.org/).

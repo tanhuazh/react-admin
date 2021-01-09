@@ -1,9 +1,20 @@
-import { render, cleanup, fireEvent } from '@testing-library/react';
-import React from 'react';
+import * as React from 'react';
+import { render, cleanup, wait, fireEvent } from '@testing-library/react';
 import expect from 'expect';
-import { TestContext } from 'ra-core';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core';
+import {
+    TestContext,
+    renderWithRedux,
+    DataProviderContext,
+    DataProvider,
+    SaveContextProvider,
+} from 'ra-core';
+import { ThemeProvider } from '@material-ui/core';
+import { createMuiTheme } from '@material-ui/core/styles';
+
 import SaveButton from './SaveButton';
+import { Toolbar, SimpleForm } from '../form';
+import { Edit } from '../detail';
+import { TextInput } from '../input';
 
 const theme = createMuiTheme();
 
@@ -13,6 +24,7 @@ const invalidButtonDomProps = {
     handleSubmitWithRedirect: jest.fn(),
     invalid: false,
     onSave: jest.fn(),
+    disabled: true,
     pristine: false,
     record: { id: 123, foo: 'bar' },
     redirect: 'list',
@@ -25,13 +37,21 @@ const invalidButtonDomProps = {
 describe('<SaveButton />', () => {
     afterEach(cleanup);
 
+    const saveContextValue = {
+        save: jest.fn(),
+        saving: false,
+        setOnFailure: jest.fn(),
+    };
+
     it('should render as submit type with no DOM errors', () => {
         const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
         const { getByLabelText } = render(
             <TestContext>
                 <ThemeProvider theme={theme}>
-                    <SaveButton {...invalidButtonDomProps} />
+                    <SaveContextProvider value={saveContextValue}>
+                        <SaveButton {...invalidButtonDomProps} />
+                    </SaveContextProvider>
                 </ThemeProvider>
             </TestContext>
         );
@@ -44,10 +64,25 @@ describe('<SaveButton />', () => {
         spy.mockRestore();
     });
 
+    it('should render a disabled button', () => {
+        const { getByLabelText } = render(
+            <TestContext>
+                <ThemeProvider theme={theme}>
+                    <SaveContextProvider value={saveContextValue}>
+                        <SaveButton disabled={true} />
+                    </SaveContextProvider>
+                </ThemeProvider>
+            </TestContext>
+        );
+        expect(getByLabelText('ra.action.save')['disabled']).toEqual(true);
+    });
+
     it('should render as submit type when submitOnEnter is true', () => {
         const { getByLabelText } = render(
             <TestContext>
-                <SaveButton submitOnEnter />
+                <SaveContextProvider value={saveContextValue}>
+                    <SaveButton submitOnEnter />
+                </SaveContextProvider>
             </TestContext>
         );
         expect(getByLabelText('ra.action.save').getAttribute('type')).toEqual(
@@ -58,7 +93,9 @@ describe('<SaveButton />', () => {
     it('should render as button type when submitOnEnter is false', () => {
         const { getByLabelText } = render(
             <TestContext>
-                <SaveButton submitOnEnter={false} />
+                <SaveContextProvider value={saveContextValue}>
+                    <SaveButton submitOnEnter={false} />
+                </SaveContextProvider>
             </TestContext>
         );
 
@@ -71,10 +108,12 @@ describe('<SaveButton />', () => {
         const onSubmit = jest.fn();
         const { getByLabelText } = render(
             <TestContext>
-                <SaveButton
-                    handleSubmitWithRedirect={onSubmit}
-                    saving={false}
-                />
+                <SaveContextProvider value={saveContextValue}>
+                    <SaveButton
+                        handleSubmitWithRedirect={onSubmit}
+                        saving={false}
+                    />
+                </SaveContextProvider>
             </TestContext>
         );
 
@@ -87,7 +126,9 @@ describe('<SaveButton />', () => {
 
         const { getByLabelText } = render(
             <TestContext>
-                <SaveButton handleSubmitWithRedirect={onSubmit} saving />
+                <SaveContextProvider value={saveContextValue}>
+                    <SaveButton handleSubmitWithRedirect={onSubmit} saving />
+                </SaveContextProvider>
             </TestContext>
         );
 
@@ -104,10 +145,12 @@ describe('<SaveButton />', () => {
                 {({ store }) => {
                     dispatchSpy = jest.spyOn(store, 'dispatch');
                     return (
-                        <SaveButton
-                            handleSubmitWithRedirect={onSubmit}
-                            invalid
-                        />
+                        <SaveContextProvider value={saveContextValue}>
+                            <SaveButton
+                                handleSubmitWithRedirect={onSubmit}
+                                invalid
+                            />
+                        </SaveContextProvider>
                     );
                 }}
             </TestContext>
@@ -124,5 +167,166 @@ describe('<SaveButton />', () => {
             type: 'RA/SHOW_NOTIFICATION',
         });
         expect(onSubmit).toHaveBeenCalled();
+    });
+
+    const defaultEditProps = {
+        basePath: '',
+        id: '123',
+        resource: 'posts',
+        location: {
+            pathname: '/customers/123',
+            search: '',
+            state: {},
+            hash: '',
+        },
+        match: {
+            params: { id: 123 },
+            isExact: true,
+            path: '/customers/123',
+            url: '/customers/123',
+        },
+        undoable: false,
+    };
+
+    it('should allow to override the onSuccess side effects', async () => {
+        const dataProvider = ({
+            getOne: () =>
+                Promise.resolve({
+                    data: { id: 123, title: 'lorem' },
+                }),
+            update: (_, { data }) => Promise.resolve({ data }),
+        } as unknown) as DataProvider;
+        const onSuccess = jest.fn();
+        const EditToolbar = props => (
+            <Toolbar {...props}>
+                <SaveButton onSuccess={onSuccess} />
+            </Toolbar>
+        );
+        const {
+            queryByDisplayValue,
+            getByLabelText,
+            getByText,
+        } = renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <Edit {...defaultEditProps}>
+                    <SimpleForm toolbar={<EditToolbar />}>
+                        <TextInput source="title" />
+                    </SimpleForm>
+                </Edit>
+            </DataProviderContext.Provider>,
+            { admin: { resources: { posts: { data: {} } } } }
+        );
+        // wait for the dataProvider.getOne() return
+        await wait(() => {
+            expect(queryByDisplayValue('lorem')).toBeDefined();
+        });
+        // change one input to enable the SaveButton (which is disabled when the form is pristine)
+        fireEvent.change(getByLabelText('resources.posts.fields.title'), {
+            target: { value: 'ipsum' },
+        });
+        fireEvent.click(getByText('ra.action.save'));
+        await wait(() => {
+            expect(onSuccess).toHaveBeenCalledWith({
+                data: { id: 123, title: 'ipsum' },
+            });
+        });
+    });
+
+    it('should allow to override the onFailure side effects', async () => {
+        jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+        const dataProvider = ({
+            getOne: () =>
+                Promise.resolve({
+                    data: { id: 123, title: 'lorem' },
+                }),
+            update: () => Promise.reject({ message: 'not good' }),
+        } as unknown) as DataProvider;
+        const onFailure = jest.fn();
+        const EditToolbar = props => (
+            <Toolbar {...props}>
+                <SaveButton onFailure={onFailure} />
+            </Toolbar>
+        );
+        const {
+            queryByDisplayValue,
+            getByLabelText,
+            getByText,
+        } = renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <Edit {...defaultEditProps}>
+                    <SimpleForm toolbar={<EditToolbar />}>
+                        <TextInput source="title" />
+                    </SimpleForm>
+                </Edit>
+            </DataProviderContext.Provider>,
+            { admin: { resources: { posts: { data: {} } } } }
+        );
+        // wait for the dataProvider.getOne() return
+        await wait(() => {
+            expect(queryByDisplayValue('lorem')).toBeDefined();
+        });
+        // change one input to enable the SaveButton (which is disabled when the form is pristine)
+        fireEvent.change(getByLabelText('resources.posts.fields.title'), {
+            target: { value: 'ipsum' },
+        });
+        fireEvent.click(getByText('ra.action.save'));
+        await wait(() => {
+            expect(onFailure).toHaveBeenCalledWith({
+                message: 'not good',
+            });
+        });
+    });
+
+    it('should allow to transform the record before save', async () => {
+        const update = jest
+            .fn()
+            .mockImplementationOnce((_, { data }) => Promise.resolve({ data }));
+        const dataProvider = ({
+            getOne: () =>
+                Promise.resolve({
+                    data: { id: 123, title: 'lorem' },
+                }),
+            update,
+        } as unknown) as DataProvider;
+        const transform = jest.fn().mockImplementationOnce(data => ({
+            ...data,
+            transformed: true,
+        }));
+        const EditToolbar = props => (
+            <Toolbar {...props}>
+                <SaveButton transform={transform} />
+            </Toolbar>
+        );
+        const {
+            queryByDisplayValue,
+            getByLabelText,
+            getByText,
+        } = renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <Edit {...defaultEditProps}>
+                    <SimpleForm toolbar={<EditToolbar />}>
+                        <TextInput source="title" />
+                    </SimpleForm>
+                </Edit>
+            </DataProviderContext.Provider>,
+            { admin: { resources: { posts: { data: {} } } } }
+        );
+        // wait for the dataProvider.getOne() return
+        await wait(() => {
+            expect(queryByDisplayValue('lorem')).toBeDefined();
+        });
+        // change one input to enable the SaveButton (which is disabled when the form is pristine)
+        fireEvent.change(getByLabelText('resources.posts.fields.title'), {
+            target: { value: 'ipsum' },
+        });
+        fireEvent.click(getByText('ra.action.save'));
+        await wait(() => {
+            expect(transform).toHaveBeenCalledWith({ id: 123, title: 'ipsum' });
+            expect(update).toHaveBeenCalledWith('posts', {
+                id: '123',
+                data: { id: 123, title: 'ipsum', transformed: true },
+                previousData: { id: 123, title: 'lorem' },
+            });
+        });
     });
 });

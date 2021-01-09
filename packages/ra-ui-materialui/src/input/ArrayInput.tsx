@@ -1,22 +1,28 @@
-import React, { cloneElement, Children } from 'react';
+import * as React from 'react';
+import { cloneElement, Children, FC, ReactElement } from 'react';
 import PropTypes from 'prop-types';
-import { isRequired, FieldTitle, composeValidators } from 'ra-core';
+import {
+    isRequired,
+    FieldTitle,
+    composeSyncValidators,
+    InputProps,
+} from 'ra-core';
 import { useFieldArray } from 'react-final-form-arrays';
 import { InputLabel, FormControl } from '@material-ui/core';
 
-import sanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 
 /**
  * To edit arrays of data embedded inside a record, <ArrayInput> creates a list of sub-forms.
  *
  *  @example
  *
- *      import { ArrayInput, SimpleFormIterator, DateInput, UrlInput } from 'react-admin';
+ *      import { ArrayInput, SimpleFormIterator, DateInput, TextInput } from 'react-admin';
  *
  *      <ArrayInput source="backlinks">
  *          <SimpleFormIterator>
  *              <DateInput source="date" />
- *              <UrlInput source="url" />
+ *              <TextInput source="url" />
  *          </SimpleFormIterator>
  *      </ArrayInput>
  *
@@ -47,7 +53,7 @@ import sanitizeRestProps from './sanitizeRestProps';
  *
  * @see https://github.com/final-form/react-final-form-arrays
  */
-const ArrayInput = ({
+const ArrayInput: FC<ArrayInputProps> = ({
     className,
     defaultValue,
     label,
@@ -57,11 +63,12 @@ const ArrayInput = ({
     source,
     validate,
     variant,
+    disabled,
     margin = 'dense',
     ...rest
 }) => {
     const sanitizedValidate = Array.isArray(validate)
-        ? composeValidators(validate)
+        ? composeSyncValidators(validate)
         : validate;
 
     const fieldProps = useFieldArray(source, {
@@ -75,7 +82,7 @@ const ArrayInput = ({
             fullWidth
             margin="normal"
             className={className}
-            {...sanitizeRestProps(rest)}
+            {...sanitizeInputRestProps(rest)}
         >
             <InputLabel htmlFor={source} shrink>
                 <FieldTitle
@@ -92,12 +99,14 @@ const ArrayInput = ({
                 source,
                 variant,
                 margin,
+                disabled,
             })}
         </FormControl>
     );
 };
 
 ArrayInput.propTypes = {
+    // @ts-ignore
     children: PropTypes.node,
     className: PropTypes.string,
     defaultValue: PropTypes.any,
@@ -117,4 +126,9 @@ ArrayInput.defaultProps = {
     options: {},
     fullWidth: true,
 };
+
+export interface ArrayInputProps extends InputProps {
+    children: ReactElement;
+    disabled?: boolean;
+}
 export default ArrayInput;

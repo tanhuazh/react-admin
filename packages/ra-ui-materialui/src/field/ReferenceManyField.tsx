@@ -1,22 +1,16 @@
-import React, {
-    FC,
-    Fragment,
-    cloneElement,
-    Children,
-    ReactElement,
-} from 'react';
+import React, { FC, cloneElement, Children, ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import {
-    Filter,
-    Sort,
-    usePaginationState,
+    FilterPayload,
+    SortPayload,
     useReferenceManyFieldController,
-    useSortState,
-    ReferenceManyProps,
-    PaginationProps,
-    SortProps,
+    ListContextProvider,
+    ListControllerProps,
+    ResourceContextProvider,
 } from 'ra-core';
-import { FieldProps, InjectedFieldProps } from './types';
+
+import { PublicFieldProps, fieldPropTypes, InjectedFieldProps } from './types';
+import sanitizeFieldRestProps from './sanitizeFieldRestProps';
 
 /**
  * Render related records to the current one.
@@ -40,7 +34,7 @@ import { FieldProps, InjectedFieldProps } from './types';
  *     </SingleFieldList>
  * </ReferenceManyField>
  *
- * By default, restricts the possible values to 25. You can extend this limit
+ * By default, restricts the displayed values to 25. You can extend this limit
  * by setting the `perPage` prop.
  *
  * @example
@@ -66,63 +60,57 @@ import { FieldProps, InjectedFieldProps } from './types';
  */
 export const ReferenceManyField: FC<ReferenceManyFieldProps> = props => {
     const {
-        children,
-        sort: initialSort,
-        perPage: initialPerPage,
-        resource,
-        reference,
-        record,
-        target,
-        filter,
-        source,
         basePath,
+        children,
+        filter,
+        page = 1,
+        perPage,
+        record,
+        reference,
+        resource,
+        sort,
+        source,
+        target,
     } = props;
+
     if (React.Children.count(children) !== 1) {
         throw new Error(
             '<ReferenceManyField> only accepts a single child (like <Datagrid>)'
         );
     }
-    const { sort, setSortField } = useSortState(initialSort);
-    const { page, perPage, setPage, setPerPage } = usePaginationState({
-        perPage: initialPerPage,
-    });
 
     const controllerProps = useReferenceManyFieldController({
-        resource,
-        reference,
-        record,
-        target,
-        filter,
-        source,
         basePath,
+        filter,
         page,
         perPage,
+        record,
+        reference,
+        resource,
         sort,
+        source,
+        target,
     });
 
     return (
-        <ReferenceManyFieldView
-            {...props}
-            {...{
-                currentSort: sort,
-                page,
-                perPage,
-                setPage,
-                setPerPage,
-                setSort: setSortField,
-                ...controllerProps,
-            }}
-        />
+        <ResourceContextProvider value={reference}>
+            <ListContextProvider value={controllerProps}>
+                <ReferenceManyFieldView {...props} {...controllerProps} />
+            </ListContextProvider>
+        </ResourceContextProvider>
     );
 };
 
-interface ReferenceManyFieldProps extends FieldProps, InjectedFieldProps {
+export interface ReferenceManyFieldProps
+    extends PublicFieldProps,
+        InjectedFieldProps {
     children: ReactElement;
-    filter?: Filter;
-    sort?: Sort;
+    filter?: FilterPayload;
+    page?: number;
+    pagination?: ReactElement;
     perPage?: number;
     reference: string;
-    resource?: string;
+    sort?: SortPayload;
     target: string;
 }
 
@@ -138,6 +126,7 @@ ReferenceManyField.propTypes = {
     reference: PropTypes.string.isRequired,
     resource: PropTypes.string,
     sortBy: PropTypes.string,
+    sortByOrder: fieldPropTypes.sortByOrder,
     source: PropTypes.string.isRequired,
     sort: PropTypes.exact({
         field: PropTypes.string,
@@ -154,60 +143,33 @@ ReferenceManyField.defaultProps = {
     addLabel: true,
 };
 
-export const ReferenceManyFieldView: FC<ReferenceManyFieldViewProps> = ({
-    children,
-    className,
-    currentSort,
-    data,
-    ids,
-    loaded,
-    page,
-    pagination,
-    perPage,
-    reference,
-    referenceBasePath,
-    setPage,
-    setPerPage,
-    setSort,
-    total,
-}) => (
-    <Fragment>
-        {cloneElement(Children.only(children), {
-            className,
-            resource: reference,
-            ids,
-            loaded,
-            data,
-            basePath: referenceBasePath,
-            currentSort,
-            setSort,
-            total,
-        })}
-        {pagination &&
-            total !== undefined &&
-            cloneElement(pagination, {
-                page,
-                perPage,
-                setPage,
-                setPerPage,
-                total,
+export const ReferenceManyFieldView: FC<ReferenceManyFieldViewProps> = props => {
+    const { basePath, children, pagination, reference, ...rest } = props;
+    return (
+        <>
+            {cloneElement(Children.only(children), {
+                ...sanitizeFieldRestProps(rest),
+                basePath,
+                resource: reference,
             })}
-    </Fragment>
-);
+            {pagination &&
+                props.total !== undefined &&
+                cloneElement(pagination)}
+        </>
+    );
+};
 
-interface ReferenceManyFieldViewProps
-    extends FieldProps,
-        InjectedFieldProps,
-        Partial<ReferenceManyProps>,
-        Pick<PaginationProps, 'page' | 'perPage' | 'setPage' | 'setPerPage'> {
+export interface ReferenceManyFieldViewProps
+    extends Omit<
+            ReferenceManyFieldProps,
+            'basePath' | 'resource' | 'page' | 'perPage'
+        >,
+        ListControllerProps {
     children: ReactElement;
-    currentSort?: Sort;
-    pagination?: ReactElement;
-    reference?: string;
-    setSort?: SortProps['setSortField'];
 }
 
 ReferenceManyFieldView.propTypes = {
+    basePath: PropTypes.string,
     children: PropTypes.element,
     className: PropTypes.string,
     currentSort: PropTypes.exact({
@@ -219,7 +181,6 @@ ReferenceManyFieldView.propTypes = {
     loaded: PropTypes.bool,
     pagination: PropTypes.element,
     reference: PropTypes.string,
-    referenceBasePath: PropTypes.string,
     setSort: PropTypes.func,
 };
 

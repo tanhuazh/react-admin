@@ -1,3 +1,5 @@
+import get from 'lodash/get';
+
 import { Identifier, Record, ReduxState } from '../types';
 import useQueryWithStore from './useQueryWithStore';
 
@@ -16,7 +18,7 @@ import useQueryWithStore from './useQueryWithStore';
  *
  * @param resource The resource name, e.g. 'posts'
  * @param id The resource identifier, e.g. 123
- * @param options Options object to pass to the dataProvider. May include side effects to be executed upon success of failure, e.g. { onSuccess: { refresh: true } }
+ * @param options Options object to pass to the dataProvider. May include side effects to be executed upon success or failure, e.g. { onSuccess: { refresh: true } }
  *
  * @returns The current request state. Destructure as { data, error, loading, loaded }.
  *
@@ -31,22 +33,31 @@ import useQueryWithStore from './useQueryWithStore';
  *     return <div>User {data.username}</div>;
  * };
  */
-const useGetOne = (
+const useGetOne = <RecordType extends Record = Record>(
     resource: string,
     id: Identifier,
     options?: any
-): UseGetOneHookValue =>
+): UseGetOneHookValue<RecordType> =>
     useQueryWithStore(
         { type: 'getOne', resource, payload: { id } },
         options,
-        (state: ReduxState) =>
-            state.admin.resources[resource]
-                ? state.admin.resources[resource].data[id]
-                : null
+        (state: ReduxState) => {
+            if (
+                // resources are registered
+                Object.keys(state.admin.resources).length > 0 &&
+                // no registered resource matching the query
+                !state.admin.resources[resource]
+            ) {
+                throw new Error(
+                    `No <Resource> defined for "${resource}". useGetOne() relies on the Redux store, so it cannot work if you don't include a <Resource>.`
+                );
+            }
+            return get(state, ['admin', 'resources', resource, 'data', id]);
+        }
     );
 
-export type UseGetOneHookValue = {
-    data?: Record;
+export type UseGetOneHookValue<RecordType extends Record = Record> = {
+    data?: RecordType;
     loading: boolean;
     loaded: boolean;
     error?: any;

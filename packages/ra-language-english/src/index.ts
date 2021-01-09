@@ -24,6 +24,7 @@ const englishMessages: TranslationMessages = {
             show: 'Show',
             sort: 'Sort',
             undo: 'Undo',
+            unselect: 'Unselect',
             expand: 'Expand',
             close: 'Close',
             open_menu: 'Open menu',
@@ -32,7 +33,7 @@ const englishMessages: TranslationMessages = {
         boolean: {
             true: 'Yes',
             false: 'No',
-            null: '',
+            null: ' ',
         },
         page: {
             create: 'Create %{name}',
@@ -102,6 +103,11 @@ const englishMessages: TranslationMessages = {
             page_rows_per_page: 'Rows per page:',
             next: 'Next',
             prev: 'Prev',
+        },
+        sort: {
+            sort_by: 'Sort by %{field} %{order}',
+            ASC: 'ascending',
+            DESC: 'descending',
         },
         auth: {
             auth_check_error: 'Please login to continue',

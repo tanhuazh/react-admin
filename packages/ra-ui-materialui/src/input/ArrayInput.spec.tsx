@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { render, cleanup } from '@testing-library/react';
 import { Form } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
@@ -95,7 +95,10 @@ describe('<ArrayInput />', () => {
 
     it('should clone each input once per value in the array', () => {
         const initialValues = {
-            arr: [{ id: 123, foo: 'bar' }, { id: 456, foo: 'baz' }],
+            arr: [
+                { id: 123, foo: 'bar' },
+                { id: 456, foo: 'baz' },
+            ],
         };
         const { queryAllByLabelText } = render(
             <FinalForm

@@ -11,6 +11,10 @@ import {
     STOP_OPTIMISTIC_MODE,
     StopOptimisticModeAction,
 } from '../../actions';
+import {
+    SET_AUTOMATIC_REFRESH,
+    SetAutomaticRefreshAction,
+} from '../../actions/uiActions';
 
 type ActionTypes =
     | ToggleSidebarAction
@@ -18,16 +22,29 @@ type ActionTypes =
     | RefreshViewAction
     | StartOptimisticModeAction
     | StopOptimisticModeAction
+    | SetAutomaticRefreshAction
     | { type: 'OTHER_ACTION' };
 
 export interface UIState {
+    readonly automaticRefreshEnabled: boolean;
     readonly sidebarOpen: boolean;
     readonly optimistic: boolean;
     readonly viewVersion: number;
 }
 
+// Match the medium breakpoint defined in the material-ui theme
+// See https://material-ui.com/customization/breakpoints/#breakpoints
+const isDesktop = (): boolean =>
+    // (min-width: 960px) => theme.breakpoints.up('md')
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    typeof window.matchMedia === 'function'
+        ? window.matchMedia('(min-width:960px)').matches
+        : false;
+
 const defaultState: UIState = {
-    sidebarOpen: false,
+    automaticRefreshEnabled: true,
+    sidebarOpen: isDesktop(),
     optimistic: false,
     viewVersion: 0,
 };
@@ -44,6 +61,11 @@ const uiReducer: Reducer<UIState> = (
             };
         case SET_SIDEBAR_VISIBILITY:
             return { ...previousState, sidebarOpen: action.payload };
+        case SET_AUTOMATIC_REFRESH:
+            return {
+                ...previousState,
+                automaticRefreshEnabled: action.payload,
+            };
         case REFRESH_VIEW:
             return {
                 ...previousState,

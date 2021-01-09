@@ -9,7 +9,7 @@ This 30 minutes tutorial will expose how to create a new admin app based on an e
 
 ## Setting Up
 
-React-admin uses React. We'll use Facebook's [create-react-app](https://github.com/facebookincubator/create-react-app) to create an empty React app, and install the `react-admin` package:
+React-admin uses React. We'll use [create-react-app](https://github.com/facebookincubator/create-react-app) to create an empty React app, and install the `react-admin` package:
 
 ```sh
 yarn create react-app test-admin
@@ -22,9 +22,9 @@ You should be up and running with an empty React application on port 3000.
 
 ## Using an API As Data Source
 
-React-admin runs in the browser, and uses APIs for fetching and storing data.
+React-admin runs in the browser, and relies on data it fetches from APIs.
 
-We'll be using [JSONPlaceholder](https://jsonplaceholder.typicode.com/), a fake REST API designed for testing and prototyping, as the datasource for the admin. Here is what it looks like:
+We'll be using [JSONPlaceholder](https://jsonplaceholder.typicode.com/), a fake REST API designed for testing and prototyping, as the datasource for the application. Here is what it looks like:
 
 ```
 curl https://jsonplaceholder.typicode.com/users/2
@@ -64,7 +64,7 @@ Bootstrap the admin app by replacing the `src/App.js` by the following code:
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Admin } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -84,11 +84,13 @@ Now it's time to add features!
 
 ## Mapping API Endpoints With Resources
 
+We'll start by adding a list of users. 
+
 The `<Admin>` component expects one or more `<Resource>` child components. Each resource maps a name to an endpoint in the API. Edit the `App.js` file to add a resource named `users`:
 
 ```diff
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 -import { Admin } from 'react-admin';
 +import { Admin, Resource, ListGuesser } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
@@ -106,7 +108,9 @@ export default App;
 
 The line `<Resource name="users" />` informs react-admin to fetch the "users" records from the [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users) URL. `<Resource>` also defines the React components to use for each CRUD operation (`list`, `create`, `edit`, and `show`).
 
-The `list={ListGuesser}` prop means that react-admin should use the `<ListGuesser>` component to display the list of posts. This component *guesses* the format to use for the columns of the list based on the data fetched from the API:
+The `list={ListGuesser}` prop means that react-admin should use the `<ListGuesser>` component to display the list of posts. This component *guesses* the format to use for the columns of the list based on the data fetched from the API.
+
+The app can now display a list of users:
 
 ![Users List](./img/tutorial_users_list.png)
 
@@ -124,7 +128,7 @@ Let's copy this code, and create a new `UserList` component, in a new file named
 
 ```jsx
 // in src/users.js
-import React from 'react';
+import * as React from "react";
 import { List, Datagrid, TextField, EmailField } from 'react-admin';
 
 export const UserList = props => (
@@ -163,13 +167,13 @@ const App = () => (
 
 There is no visible change in the browser - except now, the app uses a component that you can customize. 
 
-The main component of the users list is a `<List>` component, responsible for grabbing the information from the API, displaying the page title, and handling pagination. This list then delegates the display of the actual list of users to its child. In this case, that's a `<Datagrid>` component, which renders a table with one row for each record. The Datagrid uses its child components (here, a list of `<TextField>` and `<EmailField>`) to determine the columns to render. Each Field component maps a different field in the API response, specified by the `source` prop.
+The main component of the users list is a `<List>` component, responsible for grabbing the information from the API, displaying the page title, and handling pagination. This component then delegates the display of the actual list of users to its child. In this case, that's a `<Datagrid>` component, which renders a table with one row for each record. The Datagrid uses its child components (here, a list of `<TextField>` and `<EmailField>`) to determine the columns to render. Each Field component maps a different field in the API response, specified by the `source` prop.
 
-The `ListGuesser` created one column for every field in the response. That's a bit too much of a usable grid, so let's remove a couple `<TextField>` from the Datagrid and see the effect:
+The `ListGuesser` created one column for every field in the response. That's a bit too much for a usable grid, so let's remove a couple `<TextField>` from the Datagrid and see the effect:
 
 ```diff
 // in src/users.js
-import React from 'react';
+import * as React from "react";
 import { List, Datagrid, TextField, EmailField } from 'react-admin';
 
 export const UserList = props => (
@@ -194,13 +198,13 @@ What you've just done reflects the early stages of development with react-admin:
 
 ## Using Field Types
 
-You've just met the `<TextField>` and the `<EmailField>` components. React-admin provides more Field components, mapping various data types: number, date, image, HTML, array, reference, etc.
+You've just met the `<TextField>` and the `<EmailField>` components. React-admin provides [many more Field components](./Fields.md), mapping various data types: number, date, image, HTML, array, reference, etc.
 
 For instance, the `website` field looks like an URL. Instead of displaying it as text, why not display it using a clickable link? That's exactly what the `<UrlField>` does:
 
 ```diff
 // in src/users.js
-import React from 'react';
+import * as React from "react";
 -import { List, Datagrid, TextField, EmailField } from 'react-admin';
 +import { List, Datagrid, TextField, EmailField, UrlField } from 'react-admin';
 
@@ -227,7 +231,7 @@ That means that writing a custom Field component is really straightforward. For 
 
 ```jsx
 // in src/MyUrlField.js
-import React from 'react';
+import * as React from "react";
 
 const MyUrlField = ({ record = {}, source }) =>
     <a href={record[source]}>
@@ -241,7 +245,7 @@ You can use this component in `<UserList>`, instead of react-admin's `<UrlField>
 
 ```diff
 // in src/users.js
-import React from 'react';
+import * as React from "react";
 -import { List, Datagrid, TextField, EmailField, UrlField } from 'react-admin';
 +import { List, Datagrid, TextField, EmailField } from 'react-admin';
 +import MyUrlField from './MyUrlField';
@@ -269,7 +273,7 @@ The `MyUrlField` component is a perfect opportunity to illustrate how to customi
 
 ```jsx
 // in src/MyUrlField.js
-import React from 'react';
+import * as React from "react";
 import { makeStyles } from '@material-ui/core/styles';
 import LaunchIcon from '@material-ui/icons/Launch';
 
@@ -321,7 +325,7 @@ React-admin knows how to take advantage of these foreign keys to fetch reference
 
 ```diff
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 -import { Admin, Resource } from 'react-admin';
 +import { Admin, Resource, ListGuesser } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
@@ -343,7 +347,7 @@ The `ListGuesser` suggests using a `<ReferenceField>` for the `userId` field. Le
 
 ```jsx
 // in src/posts.js
-import React from 'react';
+import * as React from "react";
 import { List, Datagrid, TextField, ReferenceField } from 'react-admin';
 
 export const PostList = props => (
@@ -407,7 +411,7 @@ To finish the post list, place the post `id` field as first column, and remove t
 
 ```diff
 // in src/posts.js
-import React from 'react';
+import * as React from "react";
 -import { List, Datagrid, TextField, ReferenceField } from 'react-admin';
 +import { List, Datagrid, TextField, ReferenceField, EditButton } from 'react-admin';
 
@@ -454,7 +458,41 @@ const App = () => (
 
 Users can display the edit page just by clicking on the Edit button. The form rendered is already functional; it issues `PUT` requests to the REST API upon submission.
 
-Copy the `PostEdit` code dumped by the guesser in the console to the `posts.js` file so that you can customize the view. Don't forget to `import` the new components from react-admin.
+Copy the `PostEdit` code dumped by the guesser in the console to the `posts.js` file so that you can customize the view. Don't forget to `import` the new components from react-admin:
+
+```jsx
+// in src/posts.js
+import * as React from "react";
+import {
+    List,
+    Datagrid,
+    TextField,
+    ReferenceField,
+    EditButton,
+    Edit,
+    SimpleForm,
+    ReferenceInput,
+    SelectInput,
+    TextInput,
+} from 'react-admin';
+
+export const PostList = props => (
+    // ...
+);
+
+export const PostEdit = props => (
+    <Edit {...props}>
+        <SimpleForm>
+            <ReferenceInput source="userId" reference="users">
+                <SelectInput optionText="id" />
+            </ReferenceInput>
+            <TextInput source="id" />
+            <TextInput source="title" />
+            <TextInput source="body" />
+        </SimpleForm>
+    </Edit>
+);
+```
 
 You can now adjust the `PostEdit` component to disable the edition of the primary key (`id`), place it first, use the user `name` instead of the user `id` in the reference, and use a longer text input for the `body` field, as follows:
 
@@ -483,19 +521,42 @@ The `<ReferenceInput>` takes the same props as the `<ReferenceField>` (used earl
 
 Before you can use that custom component in the `App.js`, copy the `PostEdit` component into a `PostCreate`, and replace `Edit` by `Create`:
 
-```jsx
+```diff
 // in src/posts.js
-export const PostCreate = props => (
-    <Create {...props}>
-        <SimpleForm>
-            <ReferenceInput source="userId" reference="users">
-                <SelectInput optionText="name" />
-            </ReferenceInput>
-            <TextInput source="title" />
-            <TextInput multiline source="body" />
-        </SimpleForm>
-    </Create>
+import * as React from "react";
+import {
+    List,
+    Datagrid,
+    TextField,
+    ReferenceField,
+    EditButton,
+    Edit,
++   Create,
+    SimpleForm,
+    ReferenceInput,
+    SelectInput,
+    TextInput,
+} from 'react-admin';
+
+export const PostList = props => (
+    // ...
 );
+
+export const PostEdit = props => (
+    // ...
+);
+
++export const PostCreate = props => (
++    <Create {...props}>
++        <SimpleForm>
++            <ReferenceInput source="userId" reference="users">
++                <SelectInput optionText="name" />
++            </ReferenceInput>
++            <TextInput source="title" />
++            <TextInput multiline source="body" />
++        </SimpleForm>
++    </Create>
++);
 ```
 
 **Tip**: The `<PostEdit>` and the `<PostCreate>` components use almost the same child form, except for the additional `id` input in `<PostEdit>`. In most cases, the forms for creating and editing a record are a bit different, because most APIs create primary keys server-side. But if the forms are the same, you can share a common form component in `<PostEdit>` and `<PostCreate>`.
@@ -591,7 +652,7 @@ The first filter, 'q', takes advantage of a full-text functionality offered by J
 
 Filters are "search-as-you-type", meaning that when the user enters new values in the filter form, the list refreshes (via an API request) immediately.
 
-**Tip**: Note that the `label` property can be used on any any field to customize the field label.
+**Tip**: Note that the `label` property can be used on any field to customize the field label.
 
 ## Customizing the Menu Icons
 
@@ -618,10 +679,8 @@ By default, react-admin displays the list page of the first `Resource` element a
 
 ```jsx
 // in src/Dashboard.js
-import React from 'react';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
+import * as React from "react";
+import { Card, CardContent, CardHeader } from '@material-ui/core';
 
 export default () => (
     <Card>
@@ -717,7 +776,7 @@ First, you should know that you don't have to use the `<Datagrid>` component as 
 
 ```jsx
 // in src/posts.js
-import React from 'react';
+import * as React from "react";
 import { List, SimpleList } from 'react-admin';
 
 export const PostList = (props) => (
@@ -741,7 +800,7 @@ That works fine on mobile, but now the desktop user experience is worse. The bes
 
 ```jsx
 // in src/posts.js
-import React from 'react';
+import * as React from "react";
 import { useMediaQuery } from '@material-ui/core';
 import { List, SimpleList, Datagrid, TextField, ReferenceField, EditButton } from 'react-admin';
 
@@ -783,17 +842,17 @@ React-admin delegates every data query to a Data Provider object, which acts as 
 
 For instance, let's imagine you have to use the `my.api.url` REST API, which expects the following parameters:
 
-| Action              | Expected API request |
-|---------------------|---------------------- |
+| Action              | Expected API request                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------- |
 | Get list            | `GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}` |
-| Get one record      | `GET http://my.api.url/posts/123` |
-| Get several records | `GET http://my.api.url/posts?filter={"id":[123,456,789]}` |
-| Get related records | `GET http://my.api.url/posts?filter={"author_id":345}` |
-| Create a record     | `POST http://my.api.url/posts/123` |
-| Update a record     | `PUT http://my.api.url/posts/123` |
-| Update records      | `PUT http://my.api.url/posts?filter={"id":[123,124,125]}` |
-| Delete a record     | `DELETE http://my.api.url/posts/123` |
-| Delete records      | `DELETE http://my.api.url/posts?filter={"id":[123,124,125]}` |
+| Get one record      | `GET http://my.api.url/posts/123`                                                       |
+| Get several records | `GET http://my.api.url/posts?filter={"id":[123,456,789]}`                               |
+| Get related records | `GET http://my.api.url/posts?filter={"author_id":345}`                                  |
+| Create a record     | `POST http://my.api.url/posts`                                                          |
+| Update a record     | `PUT http://my.api.url/posts/123`                                                       |
+| Update records      | `PUT http://my.api.url/posts?filter={"id":[123,124,125]}`                               |
+| Delete a record     | `DELETE http://my.api.url/posts/123`                                                    |
+| Delete records      | `DELETE http://my.api.url/posts?filter={"id":[123,124,125]}`                            |
 
 
 React-admin calls the Data Provider with one method for each of the actions of this list, and expects a Promise in return. These methods are called `getList`, `getOne`, `getMany`, `getManyReference`, `create`, `update`, `updateMany`, `delete`, and `deleteMany`. It's the Data Provider's job to emit HTTP requests and transform the response into the format expected by react-admin.
@@ -916,4 +975,4 @@ const App = () => (
 
 React-admin was built with customization in mind. You can replace any react-admin component with a component of your own, for instance to display a custom list layout, or a different edit form for a given resource.
 
-Now that you've completed the tutorial, continue reading the [react-admin documentation](http://marmelab.com/react-admin/), and read the [Material UI components documentation](https://material-ui.com/).
+Now that you've completed the tutorial, continue reading the [react-admin documentation](https://marmelab.com/react-admin/Readme.html), and read the [Material UI components documentation](https://material-ui.com/).

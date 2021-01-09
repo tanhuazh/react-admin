@@ -1,4 +1,5 @@
-import React, { useCallback, FunctionComponent } from 'react';
+import * as React from 'react';
+import { useCallback, FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import FormLabel from '@material-ui/core/FormLabel';
@@ -7,11 +8,12 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import { makeStyles } from '@material-ui/core/styles';
 import { CheckboxProps } from '@material-ui/core/Checkbox';
-import { FieldTitle, useInput, InputProps, ChoicesProps } from 'ra-core';
+import { FieldTitle, useInput, ChoicesInputProps, warning } from 'ra-core';
 
-import defaultSanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 import CheckboxGroupInputItem from './CheckboxGroupInputItem';
 import InputHelperText from './InputHelperText';
+import classnames from 'classnames';
 
 const sanitizeRestProps = ({
     setFilter,
@@ -19,7 +21,7 @@ const sanitizeRestProps = ({
     setSort,
     loaded,
     ...rest
-}: any) => defaultSanitizeRestProps(rest);
+}: any) => sanitizeInputRestProps(rest);
 
 const useStyles = makeStyles(
     theme => ({
@@ -44,7 +46,7 @@ const useStyles = makeStyles(
  *
  * By default, the options are built from:
  *  - the 'id' property as the option value,
- *  - the 'name' property an the option text
+ *  - the 'name' property as the option text
  * @example
  * const choices = [
  *     { id: 12, name: 'Ray Hakt' },
@@ -89,7 +91,7 @@ const useStyles = makeStyles(
  *    { id: 'photography', name: 'myroot.category.photography' },
  * ];
  *
- * However, in some cases (e.g. inside a `<ReferenceInput>`), you may not want
+ * However, in some cases (e.g. inside a `<ReferenceArrayInput>`), you may not want
  * the choice to be translated. In that case, set the `translateChoice` prop to false.
  * @example
  * <CheckboxGroupInput source="gender" choices={choices} translateChoice={false}/>
@@ -97,10 +99,11 @@ const useStyles = makeStyles(
  * The object passed as `options` props is passed to the material-ui <Checkbox> components
  */
 const CheckboxGroupInput: FunctionComponent<
-    ChoicesProps & InputProps<CheckboxProps> & FormControlProps
+    ChoicesInputProps<CheckboxProps> & FormControlProps
 > = props => {
     const {
         choices = [],
+        className,
         classes: classesOverride,
         format,
         helperText,
@@ -122,6 +125,16 @@ const CheckboxGroupInput: FunctionComponent<
         ...rest
     } = props;
     const classes = useStyles(props);
+
+    warning(
+        source === undefined,
+        `If you're not wrapping the CheckboxGroupInput inside a ReferenceArrayInput, you must provide the source prop`
+    );
+
+    warning(
+        choices === undefined,
+        `If you're not wrapping the CheckboxGroupInput inside a ReferenceArrayInput, you must provide the choices prop`
+    );
 
     const {
         id,
@@ -165,6 +178,7 @@ const CheckboxGroupInput: FunctionComponent<
             component="fieldset"
             margin={margin}
             error={touched && !!error}
+            className={classnames(classes.root, className)}
             {...sanitizeRestProps(rest)}
         >
             <FormLabel component="legend" className={classes.label}>

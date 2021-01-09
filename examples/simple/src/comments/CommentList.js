@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import ChevronLeft from '@material-ui/icons/ChevronLeft';
 import ChevronRight from '@material-ui/icons/ChevronRight';
 import PersonIcon from '@material-ui/icons/Person';
@@ -12,14 +12,16 @@ import {
     Grid,
     Toolbar,
     useMediaQuery,
-    makeStyles,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import jsonExport from 'jsonexport/dist';
 import {
+    ListBase,
+    ListToolbar,
+    ListActions,
     DateField,
     EditButton,
     Filter,
-    List,
     PaginationLimit,
     ReferenceField,
     ReferenceInput,
@@ -28,7 +30,9 @@ import {
     ShowButton,
     SimpleList,
     TextField,
+    Title,
     downloadCSV,
+    useListContext,
     useTranslate,
 } from 'react-admin'; // eslint-disable-line import/no-unresolved
 
@@ -66,7 +70,8 @@ const exporter = (records, fetchRelatedRecords) =>
         });
     });
 
-const CommentPagination = ({ loading, ids, page, perPage, total, setPage }) => {
+const CommentPagination = () => {
+    const { loading, ids, page, perPage, total, setPage } = useListContext();
     const translate = useTranslate();
     const nbPages = Math.ceil(total / perPage) || 1;
     if (!loading && (total === 0 || (ids && !ids.length))) {
@@ -121,7 +126,8 @@ const useListStyles = makeStyles(theme => ({
     },
 }));
 
-const CommentGrid = ({ ids, data, basePath }) => {
+const CommentGrid = () => {
+    const { ids, data, basePath } = useListContext();
     const translate = useTranslate();
     const classes = useListStyles();
 
@@ -200,24 +206,28 @@ const CommentMobileList = props => (
             new Date(record.created_at).toLocaleDateString()
         }
         leftAvatar={() => <PersonIcon />}
-        {...props}
     />
 );
 
-const CommentList = props => {
-    const isSmall = useMediaQuery(theme => theme.breakpoints.down('sm'));
+const CommentList = props => (
+    <ListBase perPage={6} exporter={exporter} {...props}>
+        <ListView />
+    </ListBase>
+);
 
+const ListView = () => {
+    const isSmall = useMediaQuery(theme => theme.breakpoints.down('sm'));
+    const { defaultTitle } = useListContext();
     return (
-        <List
-            {...props}
-            perPage={6}
-            exporter={exporter}
-            filters={<CommentFilter />}
-            pagination={<CommentPagination />}
-            component="div"
-        >
+        <>
+            <Title defaultTitle={defaultTitle} />
+            <ListToolbar
+                filters={<CommentFilter />}
+                actions={<ListActions />}
+            />
             {isSmall ? <CommentMobileList /> : <CommentGrid />}
-        </List>
+            <CommentPagination />
+        </>
     );
 };
 

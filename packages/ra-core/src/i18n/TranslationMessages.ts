@@ -28,6 +28,7 @@ export interface TranslationMessages extends StringMap {
             show: string;
             sort: string;
             undo: string;
+            unselect: string;
             expand: string;
             close: string;
             open_menu: string;
@@ -104,6 +105,11 @@ export interface TranslationMessages extends StringMap {
             page_rows_per_page: string;
             next: string;
             prev: string;
+        };
+        sort: {
+            sort_by: string;
+            ASC: string;
+            DESC: string;
         };
         auth: {
             [key: string]: StringMap | string;

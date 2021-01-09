@@ -1,4 +1,5 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import { Field, Form } from 'react-final-form';
 import CardActions from '@material-ui/core/CardActions';
@@ -83,7 +84,15 @@ const LoginForm: FunctionComponent<Props> = props => {
                         : typeof error === 'undefined' || !error.message
                         ? 'ra.auth.sign_in_error'
                         : error.message,
-                    'warning'
+                    'warning',
+                    {
+                        _:
+                            typeof error === 'string'
+                                ? error
+                                : error && error.message
+                                ? error.message
+                                : undefined,
+                    }
                 );
             });
     };

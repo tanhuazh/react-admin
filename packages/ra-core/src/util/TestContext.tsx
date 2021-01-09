@@ -1,4 +1,5 @@
-import React, { Component, ReactNode } from 'react';
+import * as React from 'react';
+import { Component, ReactNode } from 'react';
 import { createStore, Store } from 'redux';
 import { Provider } from 'react-redux';
 import merge from 'lodash/merge';
@@ -14,6 +15,7 @@ export const defaultStore = {
         resources: {},
         references: { possibleValues: {} },
         ui: { viewVersion: 1 },
+        notifications: [],
     },
 };
 

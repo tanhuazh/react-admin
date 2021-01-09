@@ -1,6 +1,6 @@
-import React, { FC, ReactElement } from 'react';
+import * as React from 'react';
+import { FC, memo, ReactElement } from 'react';
 import PropTypes from 'prop-types';
-import shouldUpdate from 'recompose/shouldUpdate';
 import ImageEye from '@material-ui/icons/RemoveRedEye';
 import { Link } from 'react-router-dom';
 import { linkToRecord, Record } from 'ra-core';
@@ -19,7 +19,7 @@ const ShowButton: FC<ShowButtonProps> = ({
         to={`${linkToRecord(basePath, record && record.id)}/show`}
         label={label}
         onClick={stopPropagation}
-        {...rest as any}
+        {...(rest as any)}
     >
         {icon}
     </Button>
@@ -45,13 +45,14 @@ ShowButton.propTypes = {
     record: PropTypes.any,
 };
 
-const enhance = shouldUpdate(
-    (props: Props, nextProps: Props) =>
-        (props.record &&
-            nextProps.record &&
-            props.record.id !== nextProps.record.id) ||
-        props.basePath !== nextProps.basePath ||
-        (props.record == null && nextProps.record != null)
+const PureShowButton = memo(
+    ShowButton,
+    (props: ShowButtonProps, nextProps: ShowButtonProps) =>
+        (props.record && nextProps.record
+            ? props.record.id === nextProps.record.id
+            : props.record == nextProps.record) && // eslint-disable-line eqeqeq
+        props.basePath === nextProps.basePath &&
+        props.to === nextProps.to
 );
 
-export default enhance(ShowButton);
+export default PureShowButton;

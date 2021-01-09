@@ -5,11 +5,11 @@ title: "The Resource Component"
 
 # The `<Resource>` component
 
-A `<Resource>` component maps one API endpoint to a CRUD interface. For instance, the following admin app offers a read-only interface to the resources exposed by the JSONPlaceholder API at [`https://jsonplaceholder.typicode.com/posts`](https://jsonplaceholder.typicode.com/posts) and [`https://jsonplaceholder.typicode.com/users`](https://jsonplaceholder.typicode.com/users):
+A `<Resource>` component maps one API endpoint to a CRUD interface. For instance, the following admin app offers a read-only interface to the resources exposed by the JSONPlaceholder API at [https://jsonplaceholder.typicode.com/posts](https://jsonplaceholder.typicode.com/posts) and [https://jsonplaceholder.typicode.com/users](https://jsonplaceholder.typicode.com/users):
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -34,7 +34,7 @@ const App = () => (
 Here is a more complete admin, with components for all the CRUD operations:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -52,7 +52,7 @@ const App = () => (
 );
 ```
 
-**Tip**: Under the hood, the `<Resource>` component uses react-router to create several routes:
+**Tip**: Under the hood, the `<Resource>` component uses [react-router](https://reactrouter.com/web/guides/quick-start) to create several routes:
 
 * `/` maps to the `list` component
 * `/create` maps to the `create` component
@@ -92,7 +92,7 @@ React-admin will render the `icon` prop component in the menu:
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import PostIcon from '@material-ui/icons/Book';
 import UserIcon from '@material-ui/icons/People';
 import { Admin, Resource } from 'react-admin';

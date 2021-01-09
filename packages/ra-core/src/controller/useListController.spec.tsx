@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import expect from 'expect';
 import { fireEvent, wait, cleanup } from '@testing-library/react';
 import lolex from 'lolex';
@@ -166,6 +166,7 @@ describe('useListController', () => {
                                 list: {
                                     params: {},
                                     cachedRequests: {},
+                                    ids: [],
                                 },
                             },
                         },

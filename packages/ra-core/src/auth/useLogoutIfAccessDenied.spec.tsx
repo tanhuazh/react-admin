@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import expect from 'expect';
 import { render, cleanup, wait } from '@testing-library/react';
 
@@ -16,12 +17,18 @@ useLogout.mockImplementation(() => logout);
 const notify = jest.fn();
 useNotify.mockImplementation(() => notify);
 
-const TestComponent = ({ error }: { error?: any }) => {
+const TestComponent = ({
+    error,
+    disableNotification,
+}: {
+    error?: any;
+    disableNotification?: boolean;
+}) => {
     const [loggedOut, setLoggedOut] = useState(false);
     const logoutIfAccessDenied = useLogoutIfAccessDenied();
     useEffect(() => {
-        logoutIfAccessDenied(error).then(setLoggedOut);
-    }, [error, logoutIfAccessDenied]);
+        logoutIfAccessDenied(error, disableNotification).then(setLoggedOut);
+    }, [error, disableNotification, logoutIfAccessDenied]);
     return <div>{loggedOut ? '' : 'logged in'}</div>;
 };
 
@@ -97,6 +104,40 @@ describe('useLogoutIfAccessDenied', () => {
         await wait();
         expect(logout).toHaveBeenCalledTimes(1);
         expect(notify).toHaveBeenCalledTimes(1);
+        expect(queryByText('logged in')).toBeNull();
+    });
+
+    it('should logout without showing a notification if disableAuthentication is true', async () => {
+        const { queryByText } = render(
+            <AuthContext.Provider value={authProvider}>
+                <TestComponent
+                    error={new Error('denied')}
+                    disableNotification
+                />
+            </AuthContext.Provider>
+        );
+        await wait();
+        expect(logout).toHaveBeenCalledTimes(1);
+        expect(notify).toHaveBeenCalledTimes(0);
+        expect(queryByText('logged in')).toBeNull();
+    });
+
+    it('should logout without showing a notification if authProvider returns error with message false', async () => {
+        const { queryByText } = render(
+            <AuthContext.Provider
+                value={{
+                    ...authProvider,
+                    checkError: () => {
+                        return Promise.reject({ message: false });
+                    },
+                }}
+            >
+                <TestComponent />
+            </AuthContext.Provider>
+        );
+        await wait();
+        expect(logout).toHaveBeenCalledTimes(1);
+        expect(notify).toHaveBeenCalledTimes(0);
         expect(queryByText('logged in')).toBeNull();
     });
 });

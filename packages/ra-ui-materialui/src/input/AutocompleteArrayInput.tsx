@@ -9,12 +9,13 @@ import React, {
 import Downshift, { DownshiftProps } from 'downshift';
 import classNames from 'classnames';
 import get from 'lodash/get';
-import { makeStyles, TextField, Chip } from '@material-ui/core';
+import { TextField, Chip } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import { TextFieldProps } from '@material-ui/core/TextField';
 import {
     useInput,
     FieldTitle,
-    InputProps,
+    ChoicesInputProps,
     useSuggestions,
     warning,
 } from 'ra-core';
@@ -35,7 +36,7 @@ interface Options {
  *
  * By default, the options are built from:
  *  - the 'id' property as the option value,
- *  - the 'name' property an the option text
+ *  - the 'name' property as the option text
  * @example
  * const choices = [
  *    { id: 'M', name: 'Male' },
@@ -91,13 +92,15 @@ interface Options {
  * <AutocompleteArrayInput source="author_id" options={{ color: 'secondary' }} />
  */
 const AutocompleteArrayInput: FunctionComponent<
-    InputProps<TextFieldProps & Options> & DownshiftProps<any>
+    ChoicesInputProps<TextFieldProps & Options> &
+        Omit<DownshiftProps<any>, 'onChange'>
 > = props => {
     const {
         allowDuplicates,
         allowEmpty,
         classes: classesOverride,
         choices = [],
+        disabled,
         emptyText,
         emptyValue,
         format,
@@ -108,7 +111,7 @@ const AutocompleteArrayInput: FunctionComponent<
         isRequired: isRequiredOverride,
         label,
         limitChoicesToValue,
-        margin,
+        margin = 'dense',
         matchSuggestion,
         meta: metaOverride,
         onBlur,
@@ -136,10 +139,20 @@ const AutocompleteArrayInput: FunctionComponent<
     warning(
         isValidElement(optionText) && !matchSuggestion,
         `If the optionText prop is a React element, you must also specify the matchSuggestion prop:
-<AutocompleteInput
+<AutocompleteArrayInput
     matchSuggestion={(filterValue, suggestion) => true}
 />
         `
+    );
+
+    warning(
+        source === undefined,
+        `If you're not wrapping the AutocompleteArrayInput inside a ReferenceArrayInput, you must provide the source prop`
+    );
+
+    warning(
+        choices === undefined,
+        `If you're not wrapping the AutocompleteArrayInput inside a ReferenceArrayInput, you must provide the choices prop`
     );
 
     const classes = useStyles(props);
@@ -167,7 +180,7 @@ const AutocompleteArrayInput: FunctionComponent<
         ...rest,
     });
 
-    const values = input.value || [];
+    const values = input.value || emptyArray;
 
     const [filterValue, setFilterValue] = React.useState('');
 
@@ -177,8 +190,8 @@ const AutocompleteArrayInput: FunctionComponent<
     );
 
     const selectedItems = useMemo(() => values.map(getSuggestionFromValue), [
-        ...values,
         getSuggestionFromValue,
+        values,
     ]);
 
     const { getChoiceText, getChoiceValue, getSuggestions } = useSuggestions({
@@ -217,7 +230,7 @@ const AutocompleteArrayInput: FunctionComponent<
     // would have to first clear the input before seeing any other choices
     useEffect(() => {
         handleFilterChange('');
-    }, [...values, handleFilterChange]);
+    }, [values.join(','), handleFilterChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleKeyDown = useCallback(
         (event: React.KeyboardEvent) => {
@@ -382,6 +395,8 @@ const AutocompleteArrayInput: FunctionComponent<
                                         className={classNames({
                                             [classes.chipContainerFilled]:
                                                 variant === 'filled',
+                                            [classes.chipContainerOutlined]:
+                                                variant === 'outlined',
                                         })}
                                     >
                                         {selectedItems.map((item, index) => (
@@ -398,9 +413,11 @@ const AutocompleteArrayInput: FunctionComponent<
                                 onBlur,
                                 onChange: event => {
                                     handleFilterChange(event);
-                                    onChange!(event as React.ChangeEvent<
-                                        HTMLInputElement
-                                    >);
+                                    onChange!(
+                                        event as React.ChangeEvent<
+                                            HTMLInputElement
+                                        >
+                                    );
                                 },
                                 onFocus,
                             }}
@@ -433,6 +450,7 @@ const AutocompleteArrayInput: FunctionComponent<
                             margin={margin}
                             color={color as any}
                             size={size as any}
+                            disabled={disabled}
                             {...inputProps}
                             {...options}
                         />
@@ -447,6 +465,7 @@ const AutocompleteArrayInput: FunctionComponent<
                             suggestionsContainerProps={
                                 suggestionsContainerProps
                             }
+                            className={classes.suggestionsContainer}
                         >
                             {getSuggestions(suggestionFilter).map(
                                 (suggestion, index) => (
@@ -476,6 +495,8 @@ const AutocompleteArrayInput: FunctionComponent<
     );
 };
 
+const emptyArray = [];
+
 const useStyles = makeStyles(
     theme => {
         const chipBackgroundColor =
@@ -484,26 +505,19 @@ const useStyles = makeStyles(
                 : 'rgba(255, 255, 255, 0.09)';
 
         return {
-            root: {
-                flexGrow: 1,
-                height: 250,
-            },
             container: {
                 flexGrow: 1,
                 position: 'relative',
             },
-            paper: {
-                position: 'absolute',
-                zIndex: 1,
-                marginTop: theme.spacing(1),
-                left: 0,
-                right: 0,
-            },
+            suggestionsContainer: {},
             chip: {
                 margin: theme.spacing(0.5, 0.5, 0.5, 0),
             },
             chipContainerFilled: {
                 margin: '27px 12px 10px 0',
+            },
+            chipContainerOutlined: {
+                margin: '12px 12px 10px 0',
             },
             inputRoot: {
                 flexWrap: 'wrap',
@@ -517,9 +531,6 @@ const useStyles = makeStyles(
             inputInput: {
                 width: 'auto',
                 flexGrow: 1,
-            },
-            divider: {
-                height: theme.spacing(2),
             },
         };
     },

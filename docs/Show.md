@@ -20,12 +20,25 @@ Here are all the props accepted by the `<Show>` component:
 * [`aside`](#aside-component)
 * [`component`](#component)
 
+### CSS API
+
+The `<Show>` component accepts the usual `className` prop but you can override many class names injected to the inner components by React-admin thanks to the `classes` property (as most Material UI components, see their [documentation about it](https://material-ui.com/customization/components/#overriding-styles-with-classes)). This property accepts the following keys:
+
+| Rule name   | Description                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| `root`      | Alternative to using `className`. Applied to the root element                              |
+| `main`      | Applied to the main container                                                              |
+| `noActions` | Applied to the main container when `actions` prop is `false`                               |
+| `card`      | Applied to the child component inside the main container (Material UI's `Card` by default) |
+
+To override the style of all instances of `<Show>` using the [material-ui style overrides](https://material-ui.com/customization/globals/#css), use the `RaShow` key.
+
 Here is the minimal code necessary to display a view to show a post:
 
 {% raw %}
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -40,8 +53,8 @@ const App = () => (
 export default App;
 
 // in src/posts.js
-import React from 'react';
-import { Show, SimpleShowLayout, TextField, DateField, EditButton, RichTextField } from 'react-admin';
+import * as React from "react";
+import { Show, SimpleShowLayout, TextField, DateField, RichTextField } from 'react-admin';
 
 export const PostShow = (props) => (
     <Show {...props}>
@@ -150,7 +163,7 @@ const Aside = ({ record }) => (
 ```
 {% endraw %}
 
-**Tip**: Always test that the `record` is defined before using it, as react-admin starts rendering the UI before the API call is over.
+**Tip**: Always test the `record` is defined before using it, as react-admin starts rendering the UI before the API call is over.
 
 ### Component
 
@@ -182,7 +195,7 @@ Instead of a custom `Show`, you can use the `ShowGuesser` to determine which fie
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource, ShowGuesser } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -343,6 +356,12 @@ const ScrollableTabbedShowLayout = props => (
 export default ScrollableTabbedShowLayout;
 
 ```
+
+## Third-Party Components
+
+You can find components for react-admin in third-party repositories.
+
+- [ra-compact-ui](https://github.com/ValentinnDimitroff/ra-compact-ui#layouts): plugin that allows to have custom styled show layouts.
 
 ## Displaying Fields depending on the user permissions
 

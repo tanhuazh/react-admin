@@ -1,6 +1,6 @@
 # Upgrade to 3.0
 
-We took advantage of the major release to fix all the problems in react-admin that required a breaking change. As a consequence, you'll need to do many small changes in the code of existing react-admin v2 applications. Follow this step-by-step guide to upgrade to react-admin v3.  
+We took advantage of the major release to fix all the problems in react-admin that required a breaking change. As a consequence, you'll need to do many small changes in the code of existing react-admin v2 applications. Follow this step-by-step guide to upgrade to react-admin v3.
 
 ## Upgrade all react-admin packages
 
@@ -28,7 +28,7 @@ In the `packages.json`, upgrade ALL react-admin related dependencies to 3.0.0. T
     },
 ```
 
-Failing to upgrade one of the `ra-` packages will result in a duplication of the react-admin package in two incompatible versions, and cause hard-to-debug bugs.  
+Failing to upgrade one of the `ra-` packages will result in a duplication of the react-admin package in two incompatible versions, and cause hard-to-debug bugs.
 
 ## Increased version requirement for key dependencies
 
@@ -82,7 +82,7 @@ The syntax of the `routerMiddleware` doesn't change.
 And if you don't use the `<Admin>` component, change the package for `ConnectedRouter`:
 
 ```diff
-import React from 'react';
+import * as React from "react";
 import { Provider } from 'react-redux';
 import { createHashHistory } from 'history';
 -import { ConnectedRouter } from 'react-router-redux';
@@ -115,7 +115,8 @@ The migration to `react-final-form` changes their signature and behavior to the 
 Here's how to migrate the *Altering the Form Values before Submitting* example from the documentation:
 
 ```jsx
-import React, { useCallback } from 'react';
+import * as React from 'react';
+import { useCallback } from 'react';
 import { useForm } from 'react-final-form';
 import { SaveButton, Toolbar, useCreate, useRedirect, useNotify } from 'react-admin';
 
@@ -146,7 +147,8 @@ The `onSave` value should be a function expecting 2 arguments: the form values t
 Here's how to migrate the *Using `onSave` To Alter the Form Submission Behavior* example from the documentation:
 
 ```jsx
-import React, { useCallback } from 'react';
+import * as React from 'react';
+import { useCallback } from 'react';
 import {
     SaveButton,
     Toolbar,
@@ -192,7 +194,8 @@ In `react-admin` v2, you could link two inputs using the `FormDataConsumer` comp
 The migration to `react-final-form` changes this render prop signature a little as it will no longer receive a `dispatch` function. However, it's possible to use the `useForm` hook from `react-final-form` to achieve the same behavior:
 
 ```diff
-import React, { Fragment } from 'react';
+import * as React from 'react';
+import { Fragment } from 'react';
 -import { change } from 'redux-form';
 +import { useForm } from 'react-final-form';
 import { FormDataConsumer, REDUX_FORM_NAME } from 'react-admin';
@@ -238,9 +241,9 @@ const OrderEdit = (props) => (
 -                        />
 -                    </Fragment>
 -                )}
-+                {formDataProps => {
++                {formDataProps => 
 +                    <OrderOrigin {...formDataProps} />
-+                }}
++                }
             </FormDataConsumer>
         </SimpleForm>
     </Edit>
@@ -485,8 +488,9 @@ const ExportButton = ({ sort, filter, maxResults = 1000, resource }) => {
 When you provide an `authProvider` to the `<Admin>` component, react-admin creates a React context to make it available everywhere in the application. In version 2.x, this used the [legacy React context API](https://reactjs.org/docs/legacy-context.html). In 3.0, this uses the normal context API. That means that any context consumer will need to use the new context API.
 
 ```diff
--import React from 'react';
-+import React, { useContext } from 'react';
+-import * as React from "react";
++import * as React from 'react';
+import { useContext } from 'react';
 +import { AuthContext } from 'react-admin';
 
 -const MyComponentWithAuthProvider = (props, context) => {
@@ -648,7 +652,7 @@ const i18nProvider = {
 But don't worry: react-admin v3 contains a module called `ra-i18n-polyglot`, that is a wrapper around your old `i18nProvider` to make it compatible with the new provider signature:
 
 ```diff
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 +import polyglotI18nProvider from 'ra-i18n-polyglot';
 import englishMessages from 'ra-language-english';
@@ -696,7 +700,7 @@ If you didn't use translations, or if you passed your `i18nProvider` to the `<Ad
 However, if your app allowed users to change locale at runtime, you need to update the menu or button that triggers that locale change. Instead of dispatching a `CHANGE_LOCALE` Redux action (which has no effect in react-admin 3.0), use the `useSetLocale` hook as follows:
 
 ```diff
-import React from 'react';
+import * as React from "react";
 -import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 -import { changeLocale } from 'react-admin';
@@ -1081,7 +1085,7 @@ const PostFilter = props =>
 
 ## `<Form>` `defaultValue` Prop Was Renamed To `initialValues`
 
-This is actually to be consistent with the underlying form library ([final-form](https://final-form.org/docs/react-final-form))
+This is actually to be consistent with the underlying form library ([final-form](https://final-form.org/docs/react-final-form/getting-started))
 
 ```diff
 // for SimpleForm
@@ -1155,7 +1159,7 @@ export const CloneButton = ({
 
 ## The `<AutocompleteInput>` And `<AutocompleteArrayInput>` Components No Longer Support Certain Props
 
-We rewrote the `<AutocompleteInput>` and `<AutocompleteArrayInput>` components from scratch using [`downshift`](https://github.com/downshift-js/downshift), while the previous version was based on [react-autosuggest](https://react-autosuggest.js.org/). The new components are more robust and more future-proof, and their API didn't change.
+We rewrote the `<AutocompleteInput>` and `<AutocompleteArrayInput>` components from scratch using [downshift](https://github.com/downshift-js/downshift), while the previous version was based on [react-autosuggest](https://react-autosuggest.js.org/). The new components are more robust and more future-proof, and their API didn't change.
 
 There are three breaking changes in the new `<AutocompleteInput>` and `<AutocompleteArrayInput>` components:
 
@@ -1250,10 +1254,32 @@ const App = () => (
                     <ConnectedRouter history={history}>
                         <Switch>
                             <Route exact path="/" component={Dashboard} />
-                            <Route exact path="/posts" hasCreate render={(routeProps) => <PostList resource="posts" {...routeProps} />} />
+                            <Route exact path="/posts" render={(routeProps) => <PostList hasCreate resource="posts" {...routeProps} />} />
                             <Route exact path="/posts/create" render={(routeProps) => <PostCreate resource="posts" {...routeProps} />} />
-                            <Route exact path="/posts/:id" hasShow render={(routeProps) => <PostEdit resource="posts" {...routeProps} />} />
-                            <Route exact path="/posts/:id/show" hasEdit render={(routeProps) => <PostShow resource="posts" {...routeProps} />} />
+                            <Route 
+                                exact 
+                                path="/posts/:id" 
+                                render={(routeProps) => (
+                                    <PostEdit 
+                                        hasShow 
+                                        resource="posts" 
+                                        id={decodeURIComponent((routeProps.match).params.id)}
+                                        {...routeProps} 
+                                    />
+                                )} 
+                            />
+                            <Route 
+                                exact 
+                                path="/posts/:id/show" 
+                                render={(routeProps) => (
+                                    <PostShow 
+                                        hasEdit 
+                                        resource="posts" 
+                                        id={decodeURIComponent((routeProps.match).params.id)}
+                                        {...routeProps} 
+                                    />
+                                )} 
+                            />
                             ...
                         </Switch>
                     </ConnectedRouter>
@@ -1272,9 +1298,9 @@ The undo feature is partially implemented in the `Notification` component. If yo
 
 ```diff
 // in src/MyNotification.js
-import React from 'react';
+import * as React from "react";
 import { connect } from 'react-redux';
-import compose from 'recompose/compose';
+import compose from 'lodash/flowRight';
 import classnames from 'classnames';
 import Snackbar from "@material-ui/core/Snackbar";
 import { withStyles, createStyles } from "@material-ui/core";

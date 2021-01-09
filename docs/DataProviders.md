@@ -15,7 +15,7 @@ dataProvider
     });
 ```
 
-It's the Data Provider's job to turns these method calls into HTTP requests, and transform the HTTP responses to the data format expected by react-admin. In technical terms, a Data Provider is an *adapter* for an API. 
+It's the Data Provider's job to turn these method calls into HTTP requests, and transform the HTTP responses to the data format expected by react-admin. In technical terms, a Data Provider is an *adapter* for an API. 
 
 And to inject a Data Provider in a react-admin application, pass it as the `dataProvider` prop of the `<Admin>` component, as follows:
 
@@ -52,37 +52,45 @@ const dataProvider = {
 
 You can find an example Data Provider implementation at the end of this chapter.
 
-**Tip**: In react-admin v2, Data Providers used to be functions, not objects. React-admin v3 can detect a legacy Data Provider and wrap an object around it. So Data Providers developed for react-admin v2 still work with react-admin v3.  
+**Tip**: A Data Provider can have more methods than the 9 methods listed above. For instance, you create a dataProvider with custom methods for calling non-REST API endpoints, manipulating tree structures, subscribing to real time updates, etc.
+
+**Tip**: In react-admin v2, Data Providers used to be functions, not objects. React-admin v3 can detect a legacy Data Provider and wrap an object around it. So Data Providers developed for react-admin v2 still work with react-admin v3.
 
 ## Available Providers
 
-The react-admin project includes 4 Data Providers:
+The react-admin project includes 5 Data Providers:
 
 * Simple REST: [marmelab/ra-data-simple-rest](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-simple-rest) ([read more below](#usage)). It serves mostly as an example. Incidentally, it is compatible with the [FakeRest](https://github.com/marmelab/FakeRest) API.
 * **[JSON server](https://github.com/typicode/json-server)**: [marmelab/ra-data-json-server](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-json-server). Great for prototyping an admin over a yet-to-be-developed REST API.
-* [Graphcool](https://www.graph.cool/): [marmelab/ra-data-graphcool](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphcool). A provider for GraphQL servers following the Graphcool convention. Incidentally, this package builds up on [marmelab/ra-data-graphql](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphql), which lets you develop providers for other GraphQL conventions.
+* [Simple GraphQL](https://graphql.org/): [marmelab/ra-data-graphql-simple](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphql-simple). A GraphQL provider built with Apollo and tailored to target a simple GraphQL implementation.
 * Local JSON: [marmelab/ra-data-fakerest](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-fakerest). Based on a local object, it doesn't even use HTTP. Use it for testing purposes.
+* Local Storage: [marmelab/ra-data-localstorage](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-localstorage). User editions are persisted across refreshes and between sessions. This allows local-first apps, and can be useful in tests.
 
 Developers from the react-admin community have open-sourced Data Providers for many more backends:
 
+* **[AWS Amplify](https://docs.amplify.aws)**: [MrHertal/react-admin-amplify](https://github.com/MrHertal/react-admin-amplify)
+* **[Configurable Identity Property REST Client](https://github.com/zachrybaker/ra-data-rest-client)**: [zachrybaker/ra-data-rest-client](https://github.com/zachrybaker/ra-data-rest-client)
 * **[Django Rest Framework](https://www.django-rest-framework.org/)**: [synaptic-cl/ra-data-drf](https://github.com/synaptic-cl/ra-data-drf)
 * **[Express & Sequelize](https://github.com/lalalilo/express-sequelize-crud)**: [express-sequelize-crud](https://github.com/lalalilo/express-sequelize-crud)
-* **[Feathersjs](http://www.feathersjs.com/)**: [josx/ra-data-feathers](https://github.com/josx/ra-data-feathers)
-* **[Firebase](https://firebase.google.com/docs/database)**: [aymendhaya/ra-data-firebase-client](https://github.com/aymendhaya/ra-data-firebase-client).
-* **[Firestore](https://firebase.google.com/docs/firestore)**: [rafalzawadzki/ra-data-firestore-client](https://github.com/rafalzawadzki/ra-data-firestore-client).
-* **[GraphCool](http://www.graph.cool/)**: [marmelab/ra-data-graphcool](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphcool) (uses [Apollo](http://www.apollodata.com/))
-* **[GraphQL](http://graphql.org/)**: [marmelab/ra-data-graphql](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphql) (uses [Apollo](http://www.apollodata.com/))
+* **[Feathersjs](https://www.feathersjs.com/)**: [josx/ra-data-feathers](https://github.com/josx/ra-data-feathers)
+* **[Firebase Firestore](https://firebase.google.com/docs/firestore)**: [benwinding/react-admin-firebase](https://github.com/benwinding/react-admin-firebase).
+* **[Firebase Realtime Database](https://firebase.google.com/docs/database)**: [aymendhaya/ra-data-firebase-client](https://github.com/aymendhaya/ra-data-firebase-client).
+* **[GraphQL](https://graphql.org/)**: [marmelab/ra-data-graphql](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-graphql) (uses [Apollo](https://www.apollodata.com/))
 * **[HAL](http://stateless.co/hal_specification.html)**: [b-social/ra-data-hal](https://github.com/b-social/ra-data-hal)
-* **[Hasura](https://github.com/hasura/graphql-engine)**: [hasura/ra-data-hasura](https://github.com/hasura/graphql-engine/tree/master/community/tools/ra-data-hasura)
-* **[Hydra](http://www.hydra-cg.com/) / [JSON-LD](https://json-ld.org/)**: [api-platform/admin/hydra](https://github.com/api-platform/admin/blob/master/src/hydra/dataProvider.js)
+* **[Hasura V1](https://github.com/hasura/graphql-engine)**: [hasura/ra-data-hasura](https://github.com/hasura/ra-data-hasura), communicates with Hasura V1, using standard REST and not GraphQL
+* **[Hasura](https://github.com/hasura/graphql-engine)**: [Steams/ra-data-hasura-graphql](https://github.com/Steams/ra-data-hasura-graphql), auto generates valid GraphQL queries based on the properties exposed by the Hasura API.
+* **[Hydra](https://www.hydra-cg.com/) / [JSON-LD](https://json-ld.org/)**: [api-platform/admin/hydra](https://github.com/api-platform/admin/blob/master/src/hydra/dataProvider.js)
 * **[IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)**: [tykoth/ra-data-dexie](https://github.com/tykoth/ra-data-dexie)
-* **[JSON API](http://jsonapi.org/)**: [henvo/ra-jsonapi-client](https://github.com/henvo/ra-jsonapi-client)
+* **[JSON API](https://jsonapi.org/)**: [henvo/ra-jsonapi-client](https://github.com/henvo/ra-jsonapi-client)
 * **[JSON HAL](https://tools.ietf.org/html/draft-kelly-json-hal-08)**: [ra-data-json-hal](https://www.npmjs.com/package/ra-data-json-hal)
 * **[JSON server](https://github.com/typicode/json-server)**: [marmelab/ra-data-json-server](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-json-server).
-* **[Loopback](https://loopback.io/)**: [darthwesker/react-admin-loopback](https://github.com/darthwesker/react-admin-loopback)
+* **[LocalStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)**: [marmelab/ra-data-localstorage](https://github.com/marmelab/react-admin/tree/master/packages/ra-data-localstorage)
+* **[Loopback3](https://loopback.io/lb3)**: [darthwesker/react-admin-loopback](https://github.com/darthwesker/react-admin-loopback)
+* **[Loopback4](https://loopback.io/)**: [elmaistrenko/react-admin-lb4](https://github.com/elmaistrenko/react-admin-lb4)
 * **[Moleculer Microservices](https://github.com/RancaguaInnova/moleculer-data-provider)**: [RancaguaInnova/moleculer-data-provider](https://github.com/RancaguaInnova/moleculer-data-provider)
-* **[NestJS CRUD](https://github.com/nestjsx/crud)**: [FusionWorks/react-admin-nestjsx-crud-dataprovider](https://github.com/FusionWorks/react-admin-nestjsx-crud-dataprovider)
+* **[NestJS CRUD](https://github.com/nestjsx/crud)**: [rayman1104/ra-data-nestjsx-crud](https://github.com/rayman1104/ra-data-nestjsx-crud)
 * **[Parse](https://parseplatform.org/)**: [almahdi/ra-data-parse](https://github.com/almahdi/ra-data-parse)
+* **[PostGraphile](https://www.graphile.org/postgraphile/)**: [bowlingx/ra-postgraphile](https://github.com/BowlingX/ra-postgraphile)
 * **[PostgREST](https://postgrest.org/)**: [raphiniert-com/ra-data-postgrest](https://github.com/raphiniert-com/ra-data-postgrest)
 * **[Prisma](https://github.com/weakky/ra-data-prisma)**: [weakky/ra-data-prisma](https://github.com/weakky/ra-data-prisma)
 * **[Prisma Version 2](https://www.prisma.io/)**: [panter/ra-data-prisma](https://github.com/panter/ra-data-prisma)
@@ -115,7 +123,7 @@ Then, initialize the provider with the REST backend URL, and pass the result to 
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import simpleRestProvider from 'ra-data-simple-rest';
 
@@ -132,17 +140,17 @@ export default App;
 
 Here is how this Data Provider maps react-admin calls to API calls:
 
-| Method name        | API call
-|--------------------|----------------------------------------------------------------
-| `getList`          | `GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}`
-| `getOne`           | `GET http://my.api.url/posts/123`
-| `getMany`          | `GET http://my.api.url/posts?filter={"id":[123,456,789]}`
-| `getManyReference` | `GET http://my.api.url/posts?filter={"author_id":345}`
-| `create`           | `POST http://my.api.url/posts/123`
-| `update`           | `PUT http://my.api.url/posts/123`
-| `updateMany`       | Multiple calls to `PUT http://my.api.url/posts/123`
-| `delete`           | `DELETE http://my.api.url/posts/123`
-| `deteleMany`       | Multiple calls to `DELETE http://my.api.url/posts/123`
+| Method name        | API call                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `getList`          | `GET http://my.api.url/posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}` |
+| `getOne`           | `GET http://my.api.url/posts/123`                                                       |
+| `getMany`          | `GET http://my.api.url/posts?filter={"id":[123,456,789]}`                               |
+| `getManyReference` | `GET http://my.api.url/posts?filter={"author_id":345}`                                  |
+| `create`           | `POST http://my.api.url/posts`                                                      |
+| `update`           | `PUT http://my.api.url/posts/123`                                                       |
+| `updateMany`       | Multiple calls to `PUT http://my.api.url/posts/123`                                     |
+| `delete`           | `DELETE http://my.api.url/posts/123`                                                    |
+| `deleteMany`       | Multiple calls to `DELETE http://my.api.url/posts/123`                                  |
 
 **Note**: The simple REST client expects the API to include a `Content-Range` header in the response to `getList` calls. The value must be the total number of resources in the collection. This allows react-admin to know how many pages of resources there are in total, and build the pagination controls.
 
@@ -202,7 +210,7 @@ Now all the requests to the REST API will contain the `Authorization: SRTRDFVESG
 
 ## Extending a Data Provider (Example of File Upload)
 
-As Data Providers are just objects, you can extend them with custom logic for a given method, or for a given resource. 
+As Data Providers are just objects, you can extend them with custom logic for a given method, or a given resource. 
 
 For instance, the following Data Provider extends the `ra-data-simple-rest` provider, and adds image upload support for the `update('posts')` call (react-admin offers an `<ImageInput />` component that allows image upload).
 
@@ -274,11 +282,34 @@ Using this technique, you can also combine two Data Providers for two backends i
 
 ## Writing Your Own Data Provider
 
-APIs are so diverse that quite often, none of the available Data Providers suit you API. In such cases, you'll have to write your own Data Provider. Don't worry, it usually takes only a couple hours. 
+APIs are so diverse that quite often, none of the available Data Providers suit you API. In such cases, you'll have to write your own Data Provider. Don't worry, it usually takes only a couple of hours. 
 
 The methods of a Data Provider receive a request, and return a promise for a response. Both the request and the response format are standardized.
 
-### Request Format
+**Caution**: A Data Provider should return the same shape in `getList` and `getOne` for a given resource. This is because react-admin uses "optimistic rendering", and renders the Edit and Show view *before* calling `dataProvider.getOne()` by reusing the response from `dataProvider.getList()` if the user has displayed the List view before. If your API has different shapes for a query for a unique record and for a query for a list of records, your Data Provider should make these records consistent in shape before returning them to react-admin.
+
+For instance, the following Data Provider returns more details in `getOne` than in `getList`:
+
+```jsx
+const { data } = await dataProvider.getList('posts', {
+    pagination: { page: 1, perPage: 5 },
+    sort: { field: 'title', order: 'ASC' },
+    filter: { author_id: 12 },
+})
+// [
+//   { id: 123, title: "hello, world", author_id: 12 },
+//   { id: 125, title: "howdy partner", author_id: 12 },
+//  ],
+
+const { data } = dataProvider.getOne('posts', { id: 123 })
+// {
+//     data: { id: 123, title: "hello, world", author_id: 12, body: 'Lorem Ipsum Sic Dolor Amet' }
+// }
+```
+
+This will cause the Edit view to blink on load. If you have this problem, modify your Data Provider to return the same shape for all methods. 
+
+## Request Format
 
 Data queries require a *method* (e.g. `getOne`), a *resource* (e.g. 'posts') and a set of *parameters*.
 
@@ -286,17 +317,17 @@ Data queries require a *method* (e.g. `getOne`), a *resource* (e.g. 'posts') and
 
 Standard methods are:
 
-Method             | Usage                                           | Parameters format
------------------- | ------------------------------------------------|-------------------------------
-`getList`          | Search for resources                            | `{ pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }`
-`getOne`           | Read a single resource, by id                   | `{ id: {mixed} }`
-`getMany`          | Read a list of resource, by ids                 | `{ ids: {mixed[]} }`
-`getManyReference` | Read a list of resources related to another one | `{ target: {string}, id: {mixed}, pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }`
-`create`           | Create a single resource                        | `{ data: {Object} }`
-`update`           | Update a single resource                        | `{ id: {mixed}, data: {Object}, previousData: {Object} }`
-`updateMany`       | Update multiple resources                       | `{ ids: {mixed[]}, data: {Object} }`
-`delete`           | Delete a single resource                        | `{ id: {mixed}, previousData: {Object} }`
-`deleteMany`       | Delete multiple resources                       | `{ ids: {mixed[]} }`
+| Method             | Usage                                           | Parameters format                                                                                                                               |
+| ------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getList`          | Search for resources                            | `{ pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }`                                |
+| `getOne`           | Read a single resource, by id                   | `{ id: {mixed} }`                                                                                                                               |
+| `getMany`          | Read a list of resource, by ids                 | `{ ids: {mixed[]} }`                                                                                                                            |
+| `getManyReference` | Read a list of resources related to another one | `{ target: {string}, id: {mixed}, pagination: { page: {int} , perPage: {int} }, sort: { field: {string}, order: {string} }, filter: {Object} }` |
+| `create`           | Create a single resource                        | `{ data: {Object} }`                                                                                                                            |
+| `update`           | Update a single resource                        | `{ id: {mixed}, data: {Object}, previousData: {Object} }`                                                                                       |
+| `updateMany`       | Update multiple resources                       | `{ ids: {mixed[]}, data: {Object} }`                                                                                                            |
+| `delete`           | Delete a single resource                        | `{ id: {mixed}, previousData: {Object} }`                                                                                                       |
+| `deleteMany`       | Delete multiple resources                       | `{ ids: {mixed[]} }`                                                                                                                            |
 
 Here are several examples of how react-admin can call the Data Provider:
 
@@ -332,21 +363,21 @@ dataProvider.deleteMany('posts', { ids: [123, 234] });
 
 **Tip**: If your API supports more request types, you can add more methods to the Data Provider (for instance to support upserts, aggregations, or Remote Procedure Call). React-admin won't call these methods directly, but you can call them in your own component thanks to the `useDataProvider` hook described in the [Querying the API](./Actions.md) documentation.
 
-### Response Format
+## Response Format
 
 Data Providers methods must return a Promise for an object with a `data` property.
 
-Method             | Response format
------------------- | ----------------
-`getList`          | `{ data: {Record[]}, total: {int}, validUntil?: {Date} }`
-`getOne`           | `{ data: {Record}, validUntil?: {Date} }`
-`getMany`          | `{ data: {Record[]}, validUntil?: {Date} }`
-`getManyReference` | `{ data: {Record[]}, total: {int} }`
-`create`           | `{ data: {Record} }`
-`update`           | `{ data: {Record} }`
-`updateMany`       | `{ data: {mixed[]} }` The ids which have been updated
-`delete`           | `{ data: {Record|null} }` The record that has been deleted (optional)
-`deleteMany`       | `{ data: {mixed[]} }` The ids of the deleted records (optional)
+| Method             | Response format                                                 |
+| ------------------ | --------------------------------------------------------------- |
+| `getList`          | `{ data: {Record[]}, total: {int}, validUntil?: {Date} }`       |
+| `getOne`           | `{ data: {Record}, validUntil?: {Date} }`                       |
+| `getMany`          | `{ data: {Record[]}, validUntil?: {Date} }`                     |
+| `getManyReference` | `{ data: {Record[]}, total: {int} }`                            |
+| `create`           | `{ data: {Record} }`                                            |
+| `update`           | `{ data: {Record} }`                                            |
+| `updateMany`       | `{ data: {mixed[]} }` The ids which have been updated           |
+| `delete`           | `{ data: {Record} }` The record that has been deleted           |
+| `deleteMany`       | `{ data: {mixed[]} }` The ids of the deleted records (optional) |
 
 A `{Record}` is an object literal with at least an `id` property, e.g. `{ id: 123, title: "hello, world" }`.
 
@@ -444,13 +475,61 @@ dataProvider.deleteMany('posts', { ids: [123, 234] })
 
 **Tip**: The `validUntil` field in the response is optional. It enables the Application cache, a client-side optimization to speed up rendering and reduce network traffic. Check [the Caching documentation](./Caching.md#application-cache) for more details.
 
-### Example Implementation
+## Error Format
+
+When the API backend returns an error, the Data Provider should return a rejected Promise containing an `Error` object. This object should contain a `status` property with the HTTP response code (404, 500, etc.). React-admin inspects this error code, and uses it for [authentication](./Authentication.md) (in case of 401 or 403 errors). Besides, react-admin displays the error `message` on screen in a temporary notification.
+
+If you use `fetchJson`, you don't need to do anything: HTTP errors are automatically decorated as expected by react-admin.
+
+If you use another HTTP client, make sure you return a rejected Promise. You can use the `HttpError` class to throw an error with status in one line:
+
+```js
+import { HttpError } from 'react-admin';
+
+export default {
+    getList: (resource, params) => {
+        return new Promise((resolve, reject) => {
+            myApiClient(url, { ...options, headers: requestHeaders })
+                .then(response =>
+                    response.text().then(text => ({
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                        body: text,
+                    }))
+                )
+                .then(({ status, statusText, headers, body }) => {
+                    let json;
+                    try {
+                        json = JSON.parse(body);
+                    } catch (e) {
+                        // not json, no big deal
+                    }
+                    if (status < 200 || status >= 300) {
+                        return reject(
+                            new HttpError(
+                                (json && json.message) || statusText,
+                                status,
+                                json
+                            )
+                        );
+                    }
+                    return resolve({ status, headers, body, json });
+                });
+        });
+    },
+    // ...
+};
+```
+
+## Example Implementation
 
 Let's say that you want to map the react-admin requests to a REST backend exposing the following API:
 
-```
-# getList
 
+### getList
+
+```
 GET http://path.to.my.api/posts?sort=["title","ASC"]&range=[0, 4]&filter={"author_id":12}
 
 HTTP/1.1 200 OK
@@ -463,17 +542,21 @@ Content-Range: posts 0-4/27
     { "id": 123, "title": "hello, world", "author_id": 12 },
     { "id": 125, "title": "howdy partner", "author_id": 12 }
 ]
+```
 
-# getOne
+### getOne
 
+```
 GET http://path.to.my.api/posts/123
 
 HTTP/1.1 200 OK
 Content-Type: application/json
 { "id": 123, "title": "hello, world", "author_id": 12 }
+```
 
-# getMany
+### getMany
 
+```
 GET http://path.to.my.api/posts?filter={"id":[123,124,125]}
 
 HTTP/1.1 200 OK
@@ -483,9 +566,11 @@ Content-Type: application/json
     { "id": 124, "title": "good day sunshine", "author_id": 12 },
     { "id": 125, "title": "howdy partner", "author_id": 12 }
 ]
+```
 
-# getManyReference
+### getManyReference
 
+```
 GET http://path.to.my.api/comments?sort=["created_at","DESC"]&range=[0, 24]&filter={"post_id":123}
 
 HTTP/1.1 200 OK
@@ -495,45 +580,54 @@ Content-Range: comments 0-1/2
     { "id": 667, "title": "I agree", "post_id": 123 },
     { "id": 895, "title": "I don't agree", "post_id": 123 }
 ]
+```
 
-# create
+### create
 
+```
 POST http://path.to.my.api/posts
 { "title": "hello, world", "author_id": 12 }
 
 HTTP/1.1 200 OK
 Content-Type: application/json
 { "id": 123, "title": "hello, world", "author_id": 12 }
+```
 
+### update
 
-# update
-
+```
 PUT http://path.to.my.api/posts/123
 { "title": "hello, world!" }
 
 HTTP/1.1 200 OK
 Content-Type: application/json
 { "id": 123, "title": "hello, world!", "author_id": 12 }
+```
 
-# updateMany
+### updateMany
 
+```
 PUT http://path.to.my.api/posts?filter={"id":[123,124,125]}
 { "title": "hello, world!" }
 
 HTTP/1.1 200 OK
 Content-Type: application/json
 [123, 124, 125]
+```
 
-# delete
+### delete
 
+```
 DELETE http://path.to.my.api/posts/123
 
 HTTP/1.1 200 OK
 Content-Type: application/json
 { "id": 123, "title": "hello, world", "author_id": 12 }
+```
 
-# deleteMany
+### deleteMany
 
+```
 DELETE http://path.to.my.api/posts?filter={"id":[123,124,125]}
 
 HTTP/1.1 200 OK
@@ -640,52 +734,6 @@ export default {
 };
 ```
 
-### Error Format
-
-When the API backend returns an error, the Data Provider should return a rejected Promise containing an `Error` object. This object should contain a `status` property with the HTTP response code (404, 500, etc.). React-admin inspects this error code, and uses it for [authentication](./Authentication.md) (in case of 401 or 403 errors). Besides, react-admin displays the error `message` on screen in a temporary notification.
-
-If you use `fetchJson`, you don't need to do anything: HTTP errors are automaticlly decorated as expected by react-admin.
-
-If you use another HTTP client, make sure you return a rejected Promise. You can use the `HttpError` class to throw an error with status in one line:
-
-```js
-import { HttpError } from 'react-admin';
-
-export default {
-    getList: (resource, params) => {
-        return new Promise((resolve, reject) => {
-            myApiClient(url, { ...options, headers: requestHeaders })
-                .then(response =>
-                    response.text().then(text => ({
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: response.headers,
-                        body: text,
-                    }))
-                )
-                .then(({ status, statusText, headers, body }) => {
-                    let json;
-                    try {
-                        json = JSON.parse(body);
-                    } catch (e) {
-                        // not json, no big deal
-                    }
-                    if (status < 200 || status >= 300) {
-                        return reject(
-                            new HttpError(
-                                (json && json.message) || statusText,
-                                status,
-                                json
-                            )
-                        );
-                    }
-                    return resolve({ status, headers, body, json });
-                });
-        }),
-    ...
-}
-```
-
 ## Using The Data Provider In Components
 
 React-admin stores the Data Provider passed to `<Admin>` in a React context, so you can access it from anywhere in your code. To facilitate usage, react-admin provides many data provider hooks:
@@ -718,3 +766,37 @@ const UserProfile = ({ record }) => {
 ```
 
 You will find complete usage documentation for the data provider hooks in the [Querying the API](./Actions.md) documentation chapter.
+
+## Real-Time Updates And Locks
+
+Teams where several people work in parallel on a common task need to allow live updates, real-time notifications, and prevent data loss when two editors work on the same resource concurrently. 
+
+[`ra-realtime`](https://marmelab.com/ra-enterprise/modules/ra-realtime) (an [Enterprise Edition <img class="icon" src="./img/premium.svg" />](https://marmelab.com/ra-enterprise) module) provides hooks and UI components to lock records, and update views when the underlying data changes. It's based on the Publish / Subscribe (PubSub) pattern, and requires a backend supporting this pattern (like GraphQL, Mercure). 
+
+For instance, here is how to enable live updates on a List view:
+
+```diff
+import {
+-   List,
+    Datagrid,
+    TextField,
+    NumberField,
+    Datefield,
+} from 'react-admin';
++import { RealTimeList } from '@react-admin/ra-realtime';
+
+const PostList = props => (
+-   <List {...props}>
++   <RealTimeList {...props}>
+        <Datagrid>
+            <TextField source="title" />
+            <NumberField source="views" />
+            <DateField source="published_at" />
+        </Datagrid>
+-   </List>
++   </RealTimeList>
+);
+```
+
+Check [the `ra-realtime` documentation](https://marmelab.com/ra-enterprise/modules/ra-realtime) for more details.
+

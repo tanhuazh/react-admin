@@ -1,8 +1,8 @@
 # `<RichTextInput>` for react-admin
 
-For editing HTML with [react-admin](https://github.com/marmelab/react-admin), use the `<RichTextInput>` component. It embarks [quill](http://quilljs.com/), a popular cross-platform Rich Text Editor.
+For editing HTML with [react-admin](https://github.com/marmelab/react-admin), use the `<RichTextInput>` component. It embarks [quill](https://quilljs.com/), a popular cross-platform Rich Text Editor.
 
-![`<RichTextInput>` example](http://marmelab.com/react-admin/img/rich-text-input.png)
+![`<RichTextInput>` example](https://marmelab.com/react-admin/img/rich-text-input.png)
 
 ## Installation
 
@@ -13,7 +13,7 @@ npm install ra-input-rich-text --save-dev
 ## Usage
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import {
     DateInput,
     Edit,

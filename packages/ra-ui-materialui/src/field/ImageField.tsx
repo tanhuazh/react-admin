@@ -1,12 +1,13 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FC } from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import classnames from 'classnames';
 
-import sanitizeRestProps from './sanitizeRestProps';
-import { FieldProps, InjectedFieldProps, fieldPropTypes } from './types';
+import sanitizeFieldRestProps from './sanitizeFieldRestProps';
+import { PublicFieldProps, InjectedFieldProps, fieldPropTypes } from './types';
 
 const useStyles = makeStyles(
     {
@@ -22,13 +23,13 @@ const useStyles = makeStyles(
     { name: 'RaImageField' }
 );
 
-interface Props extends FieldProps {
+export interface ImageFieldProps extends PublicFieldProps, InjectedFieldProps {
     src?: string;
     title?: string;
     classes?: object;
 }
 
-const ImageField: FunctionComponent<Props & InjectedFieldProps> = props => {
+const ImageField: FC<ImageFieldProps> = props => {
     const {
         className,
         classes: classesOverride,
@@ -47,12 +48,12 @@ const ImageField: FunctionComponent<Props & InjectedFieldProps> = props => {
                 component="span"
                 variant="body2"
                 className={className}
-                {...sanitizeRestProps(rest)}
+                {...sanitizeFieldRestProps(rest)}
             >
                 {emptyText}
             </Typography>
         ) : (
-            <div className={className} {...sanitizeRestProps(rest)} />
+            <div className={className} {...sanitizeFieldRestProps(rest)} />
         );
     }
 
@@ -60,7 +61,7 @@ const ImageField: FunctionComponent<Props & InjectedFieldProps> = props => {
         return (
             <ul
                 className={classnames(classes.list, className)}
-                {...sanitizeRestProps(rest)}
+                {...sanitizeFieldRestProps(rest)}
             >
                 {sourceValue.map((file, index) => {
                     const fileTitleValue = get(file, title) || title;
@@ -84,7 +85,7 @@ const ImageField: FunctionComponent<Props & InjectedFieldProps> = props => {
     const titleValue = get(record, title) || title;
 
     return (
-        <div className={className} {...sanitizeRestProps(rest)}>
+        <div className={className} {...sanitizeFieldRestProps(rest)}>
             <img
                 title={titleValue}
                 alt={titleValue}

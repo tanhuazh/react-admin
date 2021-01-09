@@ -1,20 +1,17 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import TextField, { TextFieldProps } from '@material-ui/core/TextField';
 import { useInput, FieldTitle, InputProps } from 'ra-core';
 
 import InputHelperText from './InputHelperText';
-import sanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 
 const convertStringToNumber = value => {
     const float = parseFloat(value);
 
     return isNaN(float) ? null : float;
 };
-
-interface Props {
-    step?: string | number;
-}
 
 /**
  * An Input component for a number
@@ -28,11 +25,7 @@ interface Props {
  *
  * The object passed as `options` props is passed to the material-ui <TextField> component
  */
-const NumberInput: FunctionComponent<
-    Props &
-        InputProps<TextFieldProps> &
-        Omit<TextFieldProps, 'label' | 'helperText'>
-> = ({
+const NumberInput: FunctionComponent<NumberInputProps> = ({
     format,
     helperText,
     label,
@@ -45,6 +38,8 @@ const NumberInput: FunctionComponent<
     resource,
     source,
     step,
+    min,
+    max,
     validate,
     variant = 'filled',
     inputProps: overrideInputProps,
@@ -68,7 +63,7 @@ const NumberInput: FunctionComponent<
         ...rest,
     });
 
-    const inputProps = { ...overrideInputProps, step };
+    const inputProps = { ...overrideInputProps, step, min, max };
 
     return (
         <TextField
@@ -94,7 +89,7 @@ const NumberInput: FunctionComponent<
             margin={margin}
             inputProps={inputProps}
             {...options}
-            {...sanitizeRestProps(rest)}
+            {...sanitizeInputRestProps(rest)}
         />
     );
 };
@@ -112,5 +107,21 @@ NumberInput.defaultProps = {
     step: 'any',
     textAlign: 'right',
 };
+
+export interface NumberInputProps
+    extends InputProps<TextFieldProps>,
+        Omit<
+            TextFieldProps,
+            | 'label'
+            | 'helperText'
+            | 'onChange'
+            | 'onBlur'
+            | 'onFocus'
+            | 'defaultValue'
+        > {
+    step?: string | number;
+    min?: string | number;
+    max?: string | number;
+}
 
 export default NumberInput;

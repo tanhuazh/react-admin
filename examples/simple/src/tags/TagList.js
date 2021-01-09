@@ -1,29 +1,71 @@
-import React, { Fragment, useState } from 'react';
-import { List, EditButton } from 'react-admin';
+import * as React from 'react';
+import { Fragment, useState } from 'react';
+import { ListBase, useListContext, EditButton, Title } from 'react-admin';
 import {
-    List as MuiList,
+    Box,
+    List,
     ListItem,
     ListItemText,
     ListItemSecondaryAction,
     Collapse,
     Card,
-    makeStyles,
 } from '@material-ui/core';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 
-const useStyles = makeStyles({
-    card: {
-        maxWidth: '20em',
-        marginTop: '1em',
-    },
-});
-const SmallCard = ({ className, ...props }) => {
-    const classes = useStyles();
-    return <Card {...props} className={`${className} ${classes.card}`} />;
+const TagList = props => (
+    <ListBase perPage={1000} {...props}>
+        <Box maxWidth="20em" marginTop="1em">
+            <Card>
+                <Tree />
+            </Card>
+        </Box>
+    </ListBase>
+);
+
+const Tree = () => {
+    const { ids, data, defaultTitle } = useListContext();
+    const [openChildren, setOpenChildren] = useState([]);
+    const toggleNode = node =>
+        setOpenChildren(state => {
+            if (state.includes(node.id)) {
+                return [
+                    ...state.splice(0, state.indexOf(node.id)),
+                    ...state.splice(state.indexOf(node.id) + 1, state.length),
+                ];
+            } else {
+                return [...state, node.id];
+            }
+        });
+    const nodes = ids.map(id => data[id]);
+    const roots = nodes.filter(node => typeof node.parent_id === 'undefined');
+    const getChildNodes = root =>
+        nodes.filter(node => node.parent_id === root.id);
+    return (
+        <List>
+            <Title defaultTitle={defaultTitle} />
+            {roots.map(root => (
+                <SubTree
+                    key={root.id}
+                    root={root}
+                    getChildNodes={getChildNodes}
+                    openChildren={openChildren}
+                    toggleNode={toggleNode}
+                    level={1}
+                />
+            ))}
+        </List>
+    );
 };
 
-const SubTree = ({ level, root, getChildNodes, openChildren, toggleNode }) => {
+const SubTree = ({
+    level,
+    root,
+    getChildNodes,
+    openChildren,
+    toggleNode,
+    defaultTitle,
+}) => {
     const childNodes = getChildNodes(root);
     const hasChildren = childNodes.length > 0;
     const open = openChildren.includes(root.id);
@@ -44,7 +86,7 @@ const SubTree = ({ level, root, getChildNodes, openChildren, toggleNode }) => {
                 </ListItemSecondaryAction>
             </ListItem>
             <Collapse in={open} timeout="auto" unmountOnExit>
-                <MuiList component="div" disablePadding>
+                <List component="div" disablePadding>
                     {childNodes.map(node => (
                         <SubTree
                             key={node.id}
@@ -55,55 +97,10 @@ const SubTree = ({ level, root, getChildNodes, openChildren, toggleNode }) => {
                             level={level + 1}
                         />
                     ))}
-                </MuiList>
+                </List>
             </Collapse>
         </Fragment>
     );
 };
-
-const Tree = ({ ids, data }) => {
-    const [openChildren, setOpenChildren] = useState([]);
-    const toggleNode = node =>
-        setOpenChildren(state => {
-            if (state.includes(node.id)) {
-                return [
-                    ...state.splice(0, state.indexOf(node.id)),
-                    ...state.splice(state.indexOf(node.id) + 1, state.length),
-                ];
-            } else {
-                return [...state, node.id];
-            }
-        });
-    const nodes = ids.map(id => data[id]);
-    const roots = nodes.filter(node => typeof node.parent_id === 'undefined');
-    const getChildNodes = root =>
-        nodes.filter(node => node.parent_id === root.id);
-    return (
-        <MuiList>
-            {roots.map(root => (
-                <SubTree
-                    key={root.id}
-                    root={root}
-                    getChildNodes={getChildNodes}
-                    openChildren={openChildren}
-                    toggleNode={toggleNode}
-                    level={1}
-                />
-            ))}
-        </MuiList>
-    );
-};
-
-const TagList = props => (
-    <List
-        {...props}
-        perPage={1000}
-        pagination={null}
-        component={SmallCard}
-        actions={null}
-    >
-        <Tree />
-    </List>
-);
 
 export default TagList;

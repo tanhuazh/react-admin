@@ -1,4 +1,5 @@
-import React, { FC } from 'react';
+import * as React from 'react';
+import { FC } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import classnames from 'classnames';
 
@@ -20,7 +21,7 @@ interface Props {
 const Placeholder: FC<Props> = props => {
     const classes = useStyles(props);
     return (
-        <div className={classnames(props.className, classes.root)}>&nbsp;</div>
+        <div className={classnames(classes.root, props.className)}>&nbsp;</div>
     );
 };
 

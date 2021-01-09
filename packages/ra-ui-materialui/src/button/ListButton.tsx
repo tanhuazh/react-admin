@@ -1,4 +1,5 @@
-import React, { FC, ReactElement } from 'react';
+import * as React from 'react';
+import { FC, ReactElement } from 'react';
 import PropTypes from 'prop-types';
 import ActionList from '@material-ui/icons/List';
 import { Link } from 'react-router-dom';
@@ -11,7 +12,7 @@ const ListButton: FC<ListButtonProps> = ({
     icon = defaultIcon,
     ...rest
 }) => (
-    <Button component={Link} to={basePath} label={label} {...rest as any}>
+    <Button component={Link} to={basePath} label={label} {...(rest as any)}>
         {icon}
     </Button>
 );

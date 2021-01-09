@@ -1,5 +1,5 @@
-import React from 'react';
-import { cleanup } from '@testing-library/react';
+import * as React from 'react';
+import { cleanup, wait } from '@testing-library/react';
 import expect from 'expect';
 
 import renderWithRedux from '../util/renderWithRedux';
@@ -136,11 +136,15 @@ describe('useGetList', () => {
         const dataProvider = {
             getList: jest.fn(() =>
                 Promise.resolve({
-                    data: [{ id: 1, title: 'foo' }, { id: 2, title: 'bar' }],
+                    data: [
+                        { id: 1, title: 'foo' },
+                        { id: 2, title: 'bar' },
+                    ],
                     total: 2,
                 })
             ),
         };
+        await wait(); // empty the query deduplication in useQueryWithStore
         renderWithRedux(
             <DataProviderContext.Provider value={dataProvider}>
                 <UseGetList callback={hookValue} />
@@ -179,7 +183,10 @@ describe('useGetList', () => {
         const dataProvider = {
             getList: jest.fn(() =>
                 Promise.resolve({
-                    data: [{ id: 1, title: 'foo' }, { id: 2, title: 'bar' }],
+                    data: [
+                        { id: 1, title: 'foo' },
+                        { id: 2, title: 'bar' },
+                    ],
                     total: 2,
                 })
             ),
@@ -234,6 +241,7 @@ describe('useGetList', () => {
         const dataProvider = {
             getList: jest.fn(() => Promise.reject(new Error('failed'))),
         };
+        await wait(); // empty the query deduplication in useQueryWithStore
         renderWithRedux(
             <DataProviderContext.Provider value={dataProvider}>
                 <UseGetList callback={hookValue} />
@@ -263,11 +271,15 @@ describe('useGetList', () => {
                 )
                 .mockReturnValueOnce(
                     Promise.resolve({
-                        data: [{ id: 3, foo: 1 }, { id: 4, foo: 2 }],
+                        data: [
+                            { id: 3, foo: 1 },
+                            { id: 4, foo: 2 },
+                        ],
                         total: 2,
                     })
                 ),
         };
+        await wait(); // empty the query deduplication in useQueryWithStore
         renderWithRedux(
             <DataProviderContext.Provider value={dataProvider}>
                 <UseGetList options={{ onSuccess: onSuccess1 }} />
@@ -280,12 +292,18 @@ describe('useGetList', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
         expect(onSuccess1).toBeCalledTimes(1);
         expect(onSuccess1.mock.calls.pop()[0]).toEqual({
-            data: [{ id: 1, title: 'foo' }, { id: 2, title: 'bar' }],
+            data: [
+                { id: 1, title: 'foo' },
+                { id: 2, title: 'bar' },
+            ],
             total: 2,
         });
         expect(onSuccess2).toBeCalledTimes(1);
         expect(onSuccess2.mock.calls.pop()[0]).toEqual({
-            data: [{ id: 3, foo: 1 }, { id: 4, foo: 2 }],
+            data: [
+                { id: 3, foo: 1 },
+                { id: 4, foo: 2 },
+            ],
             total: 2,
         });
     });
@@ -296,6 +314,7 @@ describe('useGetList', () => {
         const dataProvider = {
             getList: jest.fn(() => Promise.reject(new Error('failed'))),
         };
+        await wait(); // empty the query deduplication in useQueryWithStore
         renderWithRedux(
             <DataProviderContext.Provider value={dataProvider}>
                 <UseGetList options={{ onFailure }} />

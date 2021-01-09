@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import expect from 'expect';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 
@@ -70,7 +70,8 @@ describe('<DateInput />', () => {
             const input = getByLabelText(
                 'resources.posts.fields.publishedAt *'
             );
-            fireEvent.blur(input);
+            input.focus();
+            input.blur();
             expect(queryByText('ra.validation.required')).not.toBeNull();
         });
     });

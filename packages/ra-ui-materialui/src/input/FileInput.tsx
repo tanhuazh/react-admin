@@ -6,7 +6,7 @@ import React, {
     ReactElement,
 } from 'react';
 import PropTypes from 'prop-types';
-import { shallowEqual } from 'recompose';
+import { shallowEqual } from 'react-redux';
 import { useDropzone, DropzoneOptions } from 'react-dropzone';
 import { makeStyles } from '@material-ui/core/styles';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -15,7 +15,7 @@ import { useInput, useTranslate, InputProps } from 'ra-core';
 
 import Labeled from './Labeled';
 import FileInputPreview from './FileInputPreview';
-import sanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 import InputHelperText from './InputHelperText';
 
 const useStyles = makeStyles(
@@ -160,9 +160,10 @@ const FileInput: FunctionComponent<
         }
     };
 
-    const childrenElement = isValidElement(Children.only(children))
-        ? (Children.only(children) as ReactElement<any>)
-        : undefined;
+    const childrenElement =
+        children && isValidElement(Children.only(children))
+            ? (Children.only(children) as ReactElement<any>)
+            : undefined;
 
     const { getRootProps, getInputProps } = useDropzone({
         ...options,
@@ -182,7 +183,7 @@ const FileInput: FunctionComponent<
             resource={resource}
             isRequired={isRequired}
             meta={meta}
-            {...sanitizeRestProps(rest)}
+            {...sanitizeInputRestProps(rest)}
         >
             <>
                 <div

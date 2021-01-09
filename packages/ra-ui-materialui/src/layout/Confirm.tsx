@@ -1,4 +1,5 @@
-import React, { FC, useCallback, MouseEventHandler } from 'react';
+import * as React from 'react';
+import { FC, useCallback, MouseEventHandler } from 'react';
 import PropTypes, { ReactComponentLike } from 'prop-types';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -15,9 +16,6 @@ import { useTranslate } from 'ra-core';
 
 const useStyles = makeStyles(
     theme => ({
-        contentText: {
-            minWidth: 400,
-        },
         confirmPrimary: {
             color: theme.palette.primary.main,
         },
@@ -96,7 +94,7 @@ const Confirm: FC<ConfirmProps> = props => {
                 {translate(title, { _: title, ...translateOptions })}
             </DialogTitle>
             <DialogContent>
-                <DialogContentText className={classes.contentText}>
+                <DialogContentText>
                     {translate(content, {
                         _: content,
                         ...translateOptions,

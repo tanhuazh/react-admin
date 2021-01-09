@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Admin, Resource } from 'react-admin';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { Admin, Resource, DataProvider } from 'react-admin';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
 
 import './App.css';
@@ -31,17 +32,17 @@ const i18nProvider = polyglotI18nProvider(locale => {
 }, 'en');
 
 const App = () => {
-    const [dataProvider, setDataProvider] = useState(null);
+    const [dataProvider, setDataProvider] = useState<DataProvider>();
 
     useEffect(() => {
         let restoreFetch;
 
         const fetchDataProvider = async () => {
             restoreFetch = await fakeServerFactory(
-                process.env.REACT_APP_DATA_PROVIDER
+                process.env.REACT_APP_DATA_PROVIDER || ''
             );
             const dataProviderInstance = await dataProviderFactory(
-                process.env.REACT_APP_DATA_PROVIDER
+                process.env.REACT_APP_DATA_PROVIDER || ''
             );
             setDataProvider(
                 // GOTCHA: dataProviderInstance can be a function
@@ -73,6 +74,7 @@ const App = () => {
             loginPage={Login}
             layout={Layout}
             i18nProvider={i18nProvider}
+            disableTelemetry
         >
             <Resource name="customers" {...visitors} />
             <Resource

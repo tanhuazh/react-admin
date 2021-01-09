@@ -2,12 +2,18 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import isEqual from 'lodash/isEqual';
 import difference from 'lodash/difference';
-import { Pagination, Record, Sort, ReduxState } from '../../types';
+import {
+    PaginationPayload,
+    Record,
+    SortPayload,
+    ReduxState,
+} from '../../types';
 import { useGetMany } from '../../dataProvider';
 import { FieldInputProps } from 'react-final-form';
 import useGetMatching from '../../dataProvider/useGetMatching';
 import { useTranslate } from '../../i18n';
 import { getStatusForArrayInput as getDataStatus } from './referenceDataStatus';
+import { useResourceContext } from '../../core';
 
 /**
  * Prepare data for the ReferenceArrayInput components
@@ -31,17 +37,20 @@ import { getStatusForArrayInput as getDataStatus } from './referenceDataStatus';
  *
  * @return {Object} controllerProps Fetched data and callbacks for the ReferenceArrayInput components
  */
-const useReferenceArrayInputController = ({
-    filter: defaultFilter,
-    filterToQuery = defaultFilterToQuery,
-    input,
-    perPage = 25,
-    sort: defaultSort = { field: 'id', order: 'DESC' },
-    options,
-    reference,
-    resource,
-    source,
-}: Option): ReferenceArrayInputProps => {
+const useReferenceArrayInputController = (
+    props: Option
+): ReferenceArrayInputProps => {
+    const {
+        filter: defaultFilter,
+        filterToQuery = defaultFilterToQuery,
+        input,
+        perPage = 25,
+        sort: defaultSort = { field: 'id', order: 'DESC' },
+        options,
+        reference,
+        source,
+    } = props;
+    const resource = useResourceContext(props);
     const translate = useTranslate();
 
     // We store the current input value in a ref so that we are able to fetch
@@ -206,12 +215,12 @@ interface ReferenceArrayInputProps {
     loading: boolean;
     loaded: boolean;
     setFilter: (filter: any) => void;
-    setPagination: (pagination: Pagination) => void;
-    setSort: (sort: Sort) => void;
+    setPagination: (pagination: PaginationPayload) => void;
+    setSort: (sort: SortPayload) => void;
 }
 
 interface Option {
-    basePath: string;
+    basePath?: string;
     filter?: any;
     filterToQuery?: (filter: any) => any;
     input: FieldInputProps<any, HTMLElement>;
@@ -219,8 +228,8 @@ interface Option {
     perPage?: number;
     record?: Record;
     reference: string;
-    resource: string;
-    sort?: Sort;
+    resource?: string;
+    sort?: SortPayload;
     source: string;
 }
 

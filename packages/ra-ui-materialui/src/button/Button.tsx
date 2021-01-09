@@ -1,17 +1,19 @@
-import React, { FC, ReactElement, SyntheticEvent, ReactNode } from 'react';
+import * as React from 'react';
+import { FC, ReactElement, SyntheticEvent, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import {
     Button as MuiButton,
     Tooltip,
     IconButton,
     useMediaQuery,
-    makeStyles,
     PropTypes as MuiPropTypes,
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import { ButtonProps as MuiButtonProps } from '@material-ui/core/Button';
 import { Theme } from '@material-ui/core';
 import classnames from 'classnames';
 import { Record, RedirectionSideEffect, useTranslate } from 'ra-core';
+import { LocationDescriptor } from 'history';
 
 /**
  * A generic Button with side icon. Only the icon is displayed on small screens.
@@ -132,12 +134,11 @@ interface Props {
     className?: string;
     color?: MuiPropTypes.Color;
     component?: ReactNode;
-    to?: string | { pathname: string; search: string };
+    to?: string | LocationDescriptor;
     disabled?: boolean;
     label?: string;
     size?: 'small' | 'medium' | 'large';
     icon?: ReactElement;
-    onClick?: (e: MouseEvent) => void;
     redirect?: RedirectionSideEffect;
     variant?: string;
     // May be injected by Toolbar

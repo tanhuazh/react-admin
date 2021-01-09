@@ -1,4 +1,5 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FunctionComponent } from 'react';
 import { AdminProps } from 'ra-core';
 
 import AdminContext from './AdminContext';
@@ -51,7 +52,8 @@ import AdminUI from './AdminUI';
  * // you can't use <Admin>. But as it delegates to sub components,
  * // it's relatively straightforward to replace it:
  *
- * import React, { useEffect, useState } from 'react';
+ * import * as React from 'react';
+import { useEffect, useState } from 'react';
  * import {
  *     AdminContext,
  *     AdminUI,
@@ -92,6 +94,7 @@ const Admin: FunctionComponent<AdminProps> = ({
     customSagas,
     dashboard,
     dataProvider,
+    disableTelemetry,
     history,
     i18nProvider,
     initialState,
@@ -101,6 +104,7 @@ const Admin: FunctionComponent<AdminProps> = ({
     loginPage,
     logoutButton,
     menu, // deprecated, use a custom layout instead
+    ready,
     theme,
     title = 'React Admin',
 }) => {
@@ -134,6 +138,7 @@ const Admin: FunctionComponent<AdminProps> = ({
                 layout={appLayout || layout}
                 customRoutes={customRoutes}
                 dashboard={dashboard}
+                disableTelemetry={disableTelemetry}
                 menu={menu}
                 catchAll={catchAll}
                 theme={theme}
@@ -141,6 +146,7 @@ const Admin: FunctionComponent<AdminProps> = ({
                 loading={loading}
                 loginPage={loginPage}
                 logout={authProvider ? logoutButton : undefined}
+                ready={ready}
             >
                 {children}
             </AdminUI>

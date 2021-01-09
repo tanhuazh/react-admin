@@ -1,9 +1,10 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import TextField, { TextFieldProps } from '@material-ui/core/TextField';
 import { useInput, FieldTitle, InputProps } from 'ra-core';
 
-import sanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 import InputHelperText from './InputHelperText';
 
 const leftPad = (nb = 2) => value => ('0'.repeat(nb) + value).slice(-nb);
@@ -26,6 +27,7 @@ const convertDateToString = (value: Date) => {
 
 // yyyy-MM-ddThh:mm
 const dateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+const defaultInputLabelProps = { shrink: true };
 
 /**
  * Converts a date from the Redux store, with timezone, to a date string
@@ -121,11 +123,9 @@ const DateTimeInput: FunctionComponent<
                     isRequired={isRequired}
                 />
             }
-            InputLabelProps={{
-                shrink: true,
-            }}
+            InputLabelProps={defaultInputLabelProps}
             {...options}
-            {...sanitizeRestProps(rest)}
+            {...sanitizeInputRestProps(rest)}
         />
     );
 };

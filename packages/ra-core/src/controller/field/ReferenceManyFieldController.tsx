@@ -1,93 +1,37 @@
 import { ReactElement, FunctionComponent } from 'react';
 
-import { Record, Sort, RecordMap, Identifier } from '../../types';
+import { Record, SortPayload } from '../../types';
 import useReferenceManyFieldController from './useReferenceManyFieldController';
-import useSortState from '../useSortState';
-import usePaginationState from '../usePaginationState';
-
-interface ChildrenFuncParams {
-    currentSort: Sort;
-    data: RecordMap;
-    ids: Identifier[];
-    loaded: boolean;
-    page: number;
-    perPage: number;
-    referenceBasePath: string;
-    setPage: (page: number) => void;
-    setPerPage: (perPage: number) => void;
-    setSort: (field: string) => void;
-    total: number;
-}
+import { ListControllerProps } from '../useListController';
 
 interface Props {
     basePath: string;
-    children: (params: ChildrenFuncParams) => ReactElement<ChildrenFuncParams>;
+    children: (params: ListControllerProps) => ReactElement<any>;
     filter?: any;
+    page?: number;
     perPage?: number;
     record?: Record;
     reference: string;
     resource: string;
-    sort?: Sort;
+    sort?: SortPayload;
     source: string;
     target: string;
     total?: number;
 }
-
-const defaultPerPage = 25;
 
 /**
  * Render prop version of the useReferenceManyFieldController hook.
  *
  * @see useReferenceManyFieldController
  */
-export const ReferenceManyFieldController: FunctionComponent<Props> = ({
-    resource,
-    reference,
-    record,
-    target,
-    filter,
-    source,
-    basePath,
-    perPage: initialPerPage,
-    sort: initialSort,
-    children,
-}) => {
-    const { sort, setSortField } = useSortState(initialSort);
-    const { page, perPage, setPage, setPerPage } = usePaginationState({
-        perPage: initialPerPage || defaultPerPage,
-    });
-    const {
-        data,
-        ids,
-        loaded,
-        referenceBasePath,
-        total,
-    } = useReferenceManyFieldController({
-        resource,
-        reference,
-        record,
-        target,
-        filter,
-        source,
-        basePath,
-        perPage,
-        page,
-        sort,
-    });
-
-    return children({
-        currentSort: sort,
-        data,
-        ids,
-        loaded,
+export const ReferenceManyFieldController: FunctionComponent<Props> = props => {
+    const { children, page = 1, perPage = 25, ...rest } = props;
+    const controllerProps = useReferenceManyFieldController({
         page,
         perPage,
-        referenceBasePath,
-        setPage,
-        setPerPage,
-        setSort: setSortField,
-        total,
+        ...rest,
     });
+    return children(controllerProps);
 };
 
 export default ReferenceManyFieldController;

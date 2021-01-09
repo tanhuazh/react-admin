@@ -1,8 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import {
     render,
     cleanup,
     act,
+    fireEvent,
+    wait,
     // @ts-ignore
     waitForDomChange,
 } from '@testing-library/react';
@@ -14,7 +16,7 @@ import renderWithRedux from '../util/renderWithRedux';
 import TestContext from '../util/TestContext';
 import DataProviderContext from './DataProviderContext';
 import { showNotification, refreshView, setListSelectedIds } from '../actions';
-import { useNotify } from '../sideEffect';
+import { useNotify, useRefresh } from '../sideEffect';
 import { History } from 'history';
 
 describe('Query', () => {
@@ -507,5 +509,78 @@ describe('Query', () => {
                 undoable: false,
             })
         );
+    });
+
+    it('should fetch again when refreshing', async () => {
+        let dispatchSpy;
+
+        const dataProvider = {
+            mytype: jest.fn(() => Promise.resolve({ data: { foo: 'bar' } })),
+        };
+
+        const Button = () => {
+            const refresh = useRefresh();
+            return (
+                <button data-testid="test" onClick={refresh}>
+                    Click me
+                </button>
+            );
+        };
+
+        let getByTestId;
+        act(() => {
+            const res = render(
+                <DataProviderContext.Provider value={dataProvider}>
+                    <TestContext enableReducers>
+                        {({ store, history }) => {
+                            dispatchSpy = jest.spyOn(store, 'dispatch');
+                            return (
+                                <Query type="mytype" resource="foo">
+                                    {() => <Button />}
+                                </Query>
+                            );
+                        }}
+                    </TestContext>
+                </DataProviderContext.Provider>
+            );
+            getByTestId = res.getByTestId;
+        });
+
+        await wait();
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'CUSTOM_FETCH',
+            payload: undefined,
+            meta: { resource: 'foo' },
+        });
+        dispatchSpy.mockClear(); // clear initial fetch
+
+        const testElement = getByTestId('test');
+        fireEvent.click(testElement);
+        await wait();
+
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'CUSTOM_FETCH',
+            payload: undefined,
+            meta: { resource: 'foo' },
+        });
+    });
+
+    it('should allow custom dataProvider methods without resource', () => {
+        const dataProvider = {
+            mytype: jest.fn(() => Promise.resolve({ data: { foo: 'bar' } })),
+        };
+
+        const myPayload = {};
+        const { dispatch } = renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <Query type="mytype" payload={myPayload}>
+                    {() => <div />}
+                </Query>
+            </DataProviderContext.Provider>
+        );
+        const action = dispatch.mock.calls[0][0];
+        expect(action.type).toEqual('CUSTOM_FETCH');
+        expect(action.meta.resource).toBeUndefined();
+        expect(dataProvider.mytype).toHaveBeenCalledWith(myPayload);
     });
 });

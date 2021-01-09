@@ -1,6 +1,11 @@
 import { useSelector, shallowEqual } from 'react-redux';
 import { CRUD_GET_MANY_REFERENCE } from '../actions/dataActions/crudGetManyReference';
-import { Pagination, Sort, Identifier, ReduxState } from '../types';
+import {
+    PaginationPayload,
+    SortPayload,
+    Identifier,
+    ReduxState,
+} from '../types';
 import useQueryWithStore from './useQueryWithStore';
 import {
     getReferences,
@@ -30,7 +35,7 @@ import { useMemo } from 'react';
  * @param {Object} sort The request sort { field, order }, e.g. { field: 'id', order: 'DESC' }
  * @param {Object} filter The request filters, e.g. { body: 'hello, world' }
  * @param {string} referencingResource The resource name, e.g. 'posts'. Used to generate a cache key
- * @param {Object} options Options object to pass to the dataProvider. May include side effects to be executed upon success of failure, e.g. { onSuccess: { refresh: true } }
+ * @param {Object} options Options object to pass to the dataProvider. May include side effects to be executed upon success or failure, e.g. { onSuccess: { refresh: true } }
  *
  * @returns The current request state. Destructure as { data, total, ids, error, loading, loaded }.
  *
@@ -59,8 +64,8 @@ const useGetManyReference = (
     resource: string,
     target: string,
     id: Identifier,
-    pagination: Pagination,
-    sort: Sort,
+    pagination: PaginationPayload,
+    sort: SortPayload,
     filter: object,
     referencingResource: string,
     options?: any

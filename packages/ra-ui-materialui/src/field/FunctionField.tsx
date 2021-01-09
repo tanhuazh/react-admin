@@ -1,44 +1,58 @@
-import React, { FunctionComponent } from 'react';
-import pure from 'recompose/pure';
+import * as React from 'react';
+import { useMemo } from 'react';
+import { Record } from 'ra-core';
 import Typography, { TypographyProps } from '@material-ui/core/Typography';
 
-import sanitizeRestProps from './sanitizeRestProps';
-import { FieldProps, InjectedFieldProps, fieldPropTypes } from './types';
-
-interface Props extends FieldProps {
-    render: (record: object, source: string) => any;
-}
+import sanitizeFieldRestProps from './sanitizeFieldRestProps';
+import { PublicFieldProps, InjectedFieldProps, fieldPropTypes } from './types';
 
 /**
+ * Field using a render function
+ *
  * @example
- * <FunctionField source="last_name" label="Name" render={record => `${record.first_name} ${record.last_name}`} />
+ * <FunctionField
+ *     source="last_name" // used for sorting
+ *     label="Name"
+ *     render={record => record && `${record.first_name} ${record.last_name}`}
+ * />
  */
-const FunctionField: FunctionComponent<
-    Props & InjectedFieldProps & TypographyProps
-> = ({ className, record = {}, source, render, ...rest }) =>
-    record ? (
-        <Typography
-            component="span"
-            variant="body2"
-            className={className}
-            {...sanitizeRestProps(rest)}
-        >
-            {render(record, source)}
-        </Typography>
-    ) : null;
+const FunctionField = <RecordType extends Record = Record>({
+    className,
+    record,
+    source = '',
+    render,
+    ...rest
+}: FunctionFieldProps<RecordType>) =>
+    useMemo(
+        () =>
+            record ? (
+                <Typography
+                    component="span"
+                    variant="body2"
+                    className={className}
+                    {...sanitizeFieldRestProps(rest)}
+                >
+                    {render(record, source)}
+                </Typography>
+            ) : null,
+        [className, record, source, render, rest]
+    );
 
-const EnhancedFunctionField = pure<Props & TypographyProps>(FunctionField);
-
-EnhancedFunctionField.defaultProps = {
+FunctionField.defaultProps = {
     addLabel: true,
 };
 
-EnhancedFunctionField.propTypes = {
+FunctionField.propTypes = {
     // @ts-ignore
     ...Typography.propTypes,
     ...fieldPropTypes,
 };
 
-EnhancedFunctionField.displayName = 'EnhancedFunctionField';
+export interface FunctionFieldProps<RecordType extends Record = Record>
+    extends PublicFieldProps,
+        InjectedFieldProps<RecordType>,
+        TypographyProps {
+    render: (record?: RecordType, source?: string) => any;
+}
 
-export default EnhancedFunctionField;
+export default FunctionField;

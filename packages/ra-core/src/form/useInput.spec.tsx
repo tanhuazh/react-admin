@@ -1,4 +1,5 @@
-import React, { FunctionComponent, ReactElement } from 'react';
+import * as React from 'react';
+import { FunctionComponent, ReactElement } from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import { Form } from 'react-final-form';
 
@@ -100,8 +101,8 @@ describe('useInput', () => {
             />
         );
         const input = getByLabelText('Title');
-
-        fireEvent.focus(input);
+        // Temporary workaround until we can upgrade testing-library in v4
+        input.focus();
         expect(handleFocus).toHaveBeenCalled();
         expect(formApi.getState().active).toEqual('title');
 
@@ -111,7 +112,7 @@ describe('useInput', () => {
         expect(handleChange).toHaveBeenCalled();
         expect(formApi.getState().values).toEqual({ title: 'A title' });
 
-        fireEvent.blur(input);
+        input.blur();
         expect(handleBlur).toHaveBeenCalled();
         expect(formApi.getState().active).toBeUndefined();
     });

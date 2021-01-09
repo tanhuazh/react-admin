@@ -1,5 +1,5 @@
 /* eslint react/jsx-key: off */
-import React from 'react';
+import * as React from 'react';
 import {
     Create,
     FormTab,
@@ -38,6 +38,11 @@ const UserEditToolbar = ({
     </Toolbar>
 );
 
+const isValidName = async value =>
+    new Promise(resolve =>
+        setTimeout(resolve(value === 'Admin' ? "Can't be Admin" : undefined))
+    );
+
 const UserCreate = ({ permissions, ...props }) => (
     <Create {...props} aside={<Aside />}>
         <TabbedForm
@@ -48,7 +53,7 @@ const UserCreate = ({ permissions, ...props }) => (
                     source="name"
                     defaultValue="Slim Shady"
                     autoFocus
-                    validate={required()}
+                    validate={[required(), isValidName]}
                 />
             </FormTab>
             {permissions === 'admin' && (

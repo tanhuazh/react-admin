@@ -13,7 +13,7 @@ The `<Admin>` tag is a great shortcut to be up and running with react-admin in m
 
 The `<Admin>` component detects when it's used inside an existing Redux `<Provider>`, and skips its own store initialization. That means that react-admin will work out of the box inside another Redux application - provided, of course, the store is compatible.
 
-Beware that you need to know about [redux](http://redux.js.org/), [react-router-dom](https://reacttraining.com/react-router/web/guides/quick-start), and [redux-saga](https://github.com/yelouafi/redux-saga) to go further.
+Beware that you need to know about [redux](https://redux.js.org/), [react-router-dom](https://reacttraining.com/react-router/web/guides/quick-start), and [redux-saga](https://github.com/yelouafi/redux-saga) to go further.
 
 React-admin requires that the redux state contains at least 2 reducers: `admin` and `router`. You can add more, or replace some of them with your own, but you can't remove or rename them. As it relies on `connected-react-router` and `redux-saga`, react-admin also expects the store to use their middlewares.
 
@@ -39,7 +39,7 @@ export default ({
     const reducer = combineReducers({
         admin: adminReducer,
         router: connectRouter(history),
-        { /* add your own reducers here */ },
+        // add your own reducers here
     });
     const resettableAppReducer = (state, action) =>
         reducer(action.type !== USER_LOGOUT ? state : undefined, action);
@@ -83,11 +83,11 @@ export default ({
 
 You can use this script as a base and then add your own middlewares or enhancers, e.g., to allow store persistence with [redux-persist](https://github.com/rt2zz/redux-persist).
 
-Then, use the `<Admin>` component as you would in a standalone application. Here is an example with 3 resources: `posts`, `comments`, and `users`
+Then, use the `<Admin>` component as you would in a standalone application. Here is an example with 3 resources: `posts`, `comments`, and `users`.
 
 ```jsx
 // in src/App.js
-import React from 'react';
+import * as React from "react";
 import { Provider } from 'react-redux';
 import { createHashHistory } from 'history';
 import { Admin, Resource } from 'react-admin';
@@ -145,28 +145,31 @@ export default App;
 
 The `<Admin>` component takes care of defining the store (unless you provide one, as seen above), of setting the Translation and Authentication contexts, and of bootstrapping the Router. In case you need to override any of these, you can use your own component instead of `<Admin>`.
 
-Here is the main code for bootstrapping a barebones react-admin application without `<Admin>`:
+Here is the main code for bootstrapping a barebone react-admin application without `<Admin>`:
 
 ```diff
 // in src/App.js
-import React from 'react';
+import * as React from "react";
++import PropTypes from "prop-types";
 import { Provider } from 'react-redux';
 import { createHashHistory } from 'history';
 +import { ConnectedRouter } from 'connected-react-router';
 +import { Switch, Route } from 'react-router-dom';
-+import withContext from 'recompose/withContext';
++import withContext from 'recompose/withContext'; // You should add recompose/withContext to your dependencies
 -import { Admin, Resource } from 'react-admin';
-+import { AuthContext, DataProviderContext, TranslationProvider, Resource } from 'react-admin';
++import { AuthContext, DataProviderContext, TranslationProvider, Resource, Notification } from 'react-admin';
 import restProvider from 'ra-data-simple-rest';
 import defaultMessages from 'ra-language-english';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
 +import { ThemeProvider } from '@material-ui/styles';
++import { createMuiTheme } from "@material-ui/core/styles";
 +import AppBar from '@material-ui/core/AppBar';
 +import Toolbar from '@material-ui/core/Toolbar';
 +import Typography from '@material-ui/core/Typography';
 
 import createAdminStore from './createAdminStore';
 import messages from './i18n';
+import authProvider from './myAuthProvider';
 
 // your app components
 import Dashboard from './Dashboard';
@@ -176,7 +179,6 @@ import { UserList, UserEdit, UserCreate } from './User';
 
 // dependency injection
 const dataProvider = restProvider('http://path.to.my.api/');
-const authProvider = () => Promise.resolve();
 const i18nProvider = polyglotI18nProvider(locale => {
     if (locale !== 'en') {
         return messages[locale];
@@ -184,6 +186,7 @@ const i18nProvider = polyglotI18nProvider(locale => {
     return defaultMessages;
 });
 const history = createHashHistory();
+const theme = createMuiTheme();
 
 const App = () => (
     <Provider
@@ -204,7 +207,7 @@ const App = () => (
 +       <AuthContext.Provider value={authProvider}>
 +       <DataProviderContext.Provider value={dataProvider}>
 +       <TranslationProvider
-+           locale={locale}
++           locale="en"
 +           i18nProvider={i18nProvider}
 +       >
 +           <ThemeProvider>
@@ -221,18 +224,19 @@ const App = () => (
 +               <ConnectedRouter history={history}>
 +                   <Switch>
 +                       <Route exact path="/" component={Dashboard} />
-+                       <Route exact path="/posts" hasCreate render={(routeProps) => <PostList resource="posts" basePath={routeProps.match.url} {...routeProps} />} />
++                       <Route exact path="/posts" render={(routeProps) => <PostList hasCreate resource="posts" basePath={routeProps.match.url} {...routeProps} />} />
 +                       <Route exact path="/posts/create" render={(routeProps) => <PostCreate resource="posts" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/posts/:id" hasShow render={(routeProps) => <PostEdit resource="posts" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/posts/:id/show" hasEdit render={(routeProps) => <PostShow resource="posts" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/comments" hasCreate render={(routeProps) => <CommentList resource="comments" basePath={routeProps.match.url} {...routeProps} />} />
++                       <Route exact path="/posts/:id" render={(routeProps) => <PostEdit hasShow resource="posts" basePath={routeProps.match.url} id={decodeURIComponent((routeProps.match).params.id)} {...routeProps} />} />
++                       <Route exact path="/posts/:id/show" render={(routeProps) => <PostShow hasEdit resource="posts" basePath={routeProps.match.url} id={decodeURIComponent((routeProps.match).params.id)} {...routeProps} />} />
++                       <Route exact path="/comments" render={(routeProps) => <CommentList hasCreate resource="comments" basePath={routeProps.match.url} {...routeProps} />} />
 +                       <Route exact path="/comments/create" render={(routeProps) => <CommentCreate resource="comments" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/comments/:id" render={(routeProps) => <CommentEdit resource="comments" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/users" hasCreate render={(routeProps) => <UsersList resource="users" basePath={routeProps.match.url} {...routeProps} />} />
++                       <Route exact path="/comments/:id" render={(routeProps) => <CommentEdit resource="comments" basePath={routeProps.match.url} id={decodeURIComponent((routeProps.match).params.id)} {...routeProps} />} />
++                       <Route exact path="/users" render={(routeProps) => <UsersList hasCreate resource="users" basePath={routeProps.match.url} {...routeProps} />} />
 +                       <Route exact path="/users/create" render={(routeProps) => <UsersCreate resource="users" basePath={routeProps.match.url} {...routeProps} />} />
-+                       <Route exact path="/users/:id" render={(routeProps) => <UsersEdit resource="users" basePath={routeProps.match.url} {...routeProps} />} />
++                       <Route exact path="/users/:id" render={(routeProps) => <UsersEdit resource="users" basePath={routeProps.match.url} id={decodeURIComponent((routeProps.match).params.id)} {...routeProps} />} />
 +                   </Switch>
 +               </ConnectedRouter>
++               <Notification />
 +           </ThemeProvider>
 +       </TranslationProvider>
 +       </DataProviderContext.Provider>
@@ -244,7 +248,7 @@ const App = () => (
 -export default App;
 +export default withContext(
 +   {
-+       authProvider: PropTypes.func,
++       authProvider: PropTypes.object,
 +   },
 +   () => ({ authProvider })
 +)(App);

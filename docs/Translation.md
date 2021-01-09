@@ -11,7 +11,7 @@ You will use translation features mostly via the `i18nProvider`, and a set of ho
 
 **Tip**: We'll use a bit of custom vocabulary in this chapter:
  
-- "i18n" is a shorter way to write "internationalization" (an i followed by 18 letters followed by n) 
+- "i18n" is a shorter way to write "internationalization" (an "i" followed by 18 letters followed by "n") 
 - "locale" is a concept similar to languages, but it also includes the concept of country. For instance, there are several English locales (like `en_us` and `en_gb`) because US and UK citizens don't use exactly the same language. For react-admin, the "locale" is just a key for your i18nProvider, so it can have any value you want.
 
 ## Introducing the `i18nProvider`
@@ -100,7 +100,7 @@ const i18nProvider = {
 };
 ```
 
-But this is too naive: react-admin expects that i18nProviders support string interpolation for translation, and asynchronous message loading for locale change. That's why react-admin bundles an `i18nProvider` *factory* called `polyglotI18nProvider`. This factory relies on [polyglot.js](http://airbnb.io/polyglot.js/), which uses JSON files for translations. It only expects one argument: a function returning a list of messages based on a locale passed as argument. 
+But this is too naive: react-admin expects that i18nProviders support string interpolation for translation, and asynchronous message loading for locale change. That's why react-admin bundles an `i18nProvider` *factory* called `polyglotI18nProvider`. This factory relies on [polyglot.js](https://airbnb.io/polyglot.js/), which uses JSON files for translations. It only expects one argument: a function returning a list of messages based on a locale passed as argument. 
 
 So the previous provider can be written as:
 
@@ -141,7 +141,7 @@ const i18nProvider = polyglotI18nProvider(locale =>
 The default react-admin locale is `en`, for English. If you want to display the interface in another language by default, you'll have to install a third-party package. For instance, to change the interface to French, you must install the `ra-language-french` npm package, then use it in a custom `i18nProvider`, as follows:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
 import frenchMessages from 'ra-language-french';
@@ -164,8 +164,9 @@ You can find translation packages for the following languages:
 - Arabic (`ar`): [developerium/ra-language-arabic](https://github.com/developerium/ra-language-arabic)
 - Armenian (`am`): [mrdntgrn/ra-language-armenian](https://github.com/mrdntgrn/ra-language-armenian)
 - Belarusian (`be`): [tui-ru/ra-language-belarusian](https://github.com/tui-ru/ra-language-belarusian)
+- Brazilian Portuguese (`pt-br`): [gucarletto/ra-language-pt-br](https://github.com/gucarletto/ra-language-pt-br)
 - Bulgarian (`bg`): [ptodorov0/ra-language-bulgarian](https://github.com/ptodorov0/ra-language-bulgarian)
-- Catalan (`ca`): [sergioedo/ra-language-catalan](https://github.com/sergioedo/ra-language-catalan)
+- Catalan (`ca`): [joshf/ra-language-catalan](https://github.com/joshf/ra-language-catalan)
 - Chinese (`zh-TW`): [areyliu6/ra-language-chinese-traditional](https://github.com/areyliu6/ra-language-chinese-traditional)
 - Chinese (`zh`): [chen4w/ra-language-chinese](https://github.com/chen4w/ra-language-chinese)
 - Czech (`cs`): [binao/ra-language-czech](https://github.com/binao/ra-language-czech)
@@ -185,9 +186,11 @@ You can find translation packages for the following languages:
 - Korean (`ko`): [acidsound/ra-language-korean](https://github.com/acidsound/ra-language-korean)
 - Latvian (`lv`): [tui-ru/ra-language-latvian](https://github.com/tui-ru/ra-language-latvian)
 - Lithuanian (`lt`): [tui-ru/ra-language-lithuanian](https://github.com/tui-ru/ra-language-lithuanian)
+- Malay (`ms`): [kayuapi/ra-language-malay](https://github.com/kayuapi/ra-language-malay.git)
 - Norwegian (`no`): [jon-harald/ra-language-norwegian](https://github.com/jon-harald/ra-language-norwegian)
 - Polish (`pl`): [tskorupka/ra-language-polish](https://github.com/tskorupka/ra-language-polish)
 - Portuguese (`pt`): [henriko202/ra-language-portuguese](https://github.com/henriko202/ra-language-portuguese)
+- Romanian (`ro`): [gyhaLabs/ra-language-romanian](https://github.com/gyhaLabs/ra-language-romanian)
 - Russian (`ru`): [klucherev/ra-language-russian](https://github.com/klucherev/ra-language-russian)
 - Slovak (`sk`): [zavadpe/ra-language-slovak](https://github.com/zavadpe/ra-language-slovak)
 - Spanish (`es`): [blackboxvision/ra-language-spanish](https://github.com/BlackBoxVision/ra-language-spanish)
@@ -213,7 +216,7 @@ If you want to contribute a new translation, feel free to submit a pull request 
 If you want to offer the ability to change locale at runtime, you must provide an `i18nProvider` that contains the messages for all possible locales:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { Admin, Resource } from 'react-admin';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
 import englishMessages from 'ra-language-english';
@@ -237,7 +240,7 @@ export default App;
 Then, use the `useSetLocale` hook to change locale. For instance, the following component allows the user to switch the interface language between English and French:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import Button from '@material-ui/core/Button';
 import { useSetLocale } from 'react-admin';
 
@@ -260,7 +263,8 @@ export default LocaleSwitcher;
 Your language switcher component probably needs to know the current locale, in order to disable/transform the button for the current language. The `useLocale` hook returns the current locale:
 
 ```jsx
-import React, { Component } from 'react';
+import * as React from 'react';
+import { Component } from 'react';
 import Button from '@material-ui/core/Button';
 import { useLocale, useSetLocale } from 'react-admin';
 
@@ -319,7 +323,7 @@ const App = () => (
 React-admin provides a helper function named `resolveBrowserLocale()`, which detects the user's browser locale. To use it, simply pass the function as the `initialLocale` argument of `polyglotI18nProvider`.
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { 
     Admin,
     Resource,
@@ -348,6 +352,54 @@ export default App;
 ```
 
 Beware that users from all around the world may use your application, so make sure the `i18nProvider` returns default messages even for unknown locales?
+
+## Restoring The Locale Choice
+
+The `<LanguageSwitcher>` component is part of `ra-preferences`, an [Enterprise Edition](https://marmelab.com/ra-enterprise)<img class="icon" src="./img/premium.svg" /> module. It displays a button in the App Bar letting users choose their preferred language, and **persists that choice in localStorage**. Users only have to set their preferred locale once per browser.
+
+```jsx
+import * as React from 'react';
+import { LanguageSwitcher } from '@react-admin/ra-preferences';
+import polyglotI18nProvider from 'ra-i18n-polyglot';
+import englishMessages from 'ra-language-english';
+import frenchMessages from 'ra-language-french';
+import { Admin, Resource, List, SimpleList, Layout, AppBar } from 'react-admin';
+import { Box, Typography } from '@material-ui/core';
+
+const MyAppBar = props => (
+    <AppBar {...props}>
+        <Box flex="1">
+            <Typography variant="h6" id="react-admin-title"></Typography>
+        </Box>
+        <LanguageSwitcher
+            languages={[
+                { locale: 'en', name: 'English' },
+                { locale: 'fr', name: 'Français' },
+            ]}
+            defaultLanguage="English"
+        />
+    </AppBar>
+);
+
+const MyLayout = props => <Layout {...props} appBar={MyAppBar} />;
+
+const i18nProvider = polyglotI18nProvider(
+    locale => (locale === 'fr' ? frenchMessages : englishMessages),
+    'en' // Default locale
+);
+
+const App = () => (
+    <Admin
+        i18nProvider={i18nProvider}
+        dataProvider={dataProvider}
+        layout={MyLayout}
+    >
+        <Resource name="posts" list={PostList} />
+    </Admin>
+);
+```
+
+Check [the `ra-preferences` documentation](https://marmelab.com/ra-enterprise/modules/ra-preferences) for more details.
 
 ## Translation Messages
 
@@ -409,7 +461,7 @@ This lets you translate your own resource and field names by passing a `messages
 }
 ```
 
-As you can see, [polyglot pluralization](http://airbnb.io/polyglot.js/#pluralization) is used here, but it is optional.
+As you can see, [polyglot pluralization](https://airbnb.io/polyglot.js/#pluralization) is used here, but it is optional.
 
 Using `resources` keys is an alternative to using the `label` prop in Field and Input components, with the advantage of supporting translation.
 
@@ -446,7 +498,7 @@ If you need to translate messages in your own components, React-admin provides a
 
 ```jsx
 // in src/MyHelloButton.js
-import React from 'react';
+import * as React from "react";
 import { useTranslate } from 'react-admin';
 
 const MyHelloButton = () => {
@@ -481,7 +533,8 @@ If you're stuck with class components, react-admin also exports a `withTranslate
 
 ```jsx
 // in src/MyHelloButton.js
-import React, { Component } from 'react';
+import * as React from 'react';
+import { Component } from 'react';
 import { withTranslate } from 'react-admin';
 
 class MyHelloButton extends Component {
@@ -522,7 +575,7 @@ translate('not_yet_translated', { _: 'Default translation' });
 => 'Default translation'
 ```
 
-To find more detailed examples, please refer to [http://airbnb.io/polyglot.js/](http://airbnb.io/polyglot.js/)
+To find more detailed examples, please refer to [https://airbnb.io/polyglot.js/](https://airbnb.io/polyglot.js/)
 
 ## Translating Validation Errors
 
@@ -569,7 +622,7 @@ export default {
 By default, react-admin translates the notification messages. You can pass variables for polyglot interpolation with custom notifications. For example:
 
 ```js
-notify('myroot.hello.world', 'info', { messageArgs: { name: 'Planet Earth' } });
+notify('myroot.hello.world', 'info', { name: 'Planet Earth' });
 ```
 
 Assuming you have the following in your custom messages:
@@ -596,9 +649,32 @@ If you want to override these messages in a specific resource you can add the fo
 - `resources.${resourceName}.empty` for the primary message (e.g. "No posts yet.")
 - `resources.${resourceName}.invite` for the message inviting the user to create one (e.g. "Do you want to create one?")
 
+## Specific case in Confirm messages and Empty Page
+
+In confirm messages and in the empty page, the resource name appears in the middle of sentences, and react-admin automatically sets the resource name translation to lower case.
+
+> Are you sure you want to delete this comment?
+
+This works in English, but you may want to display resources in another way to match with language rules, like in German, where names are always capitalized.
+ie: `Sind Sie sicher, dass Sie diesen Kommentar löschen möchten?`
+
+To do this, simply add a `forcedCaseName` key next to the `name` key in your translation file.
+
+```js
+resources: {
+    comments: {
+        name: 'Kommentar |||| Kommentare',
+        forcedCaseName: 'Kommentar |||| Kommentare',
+        fields: {
+            id: 'Id',
+            name: 'Bezeichnung',
+        },
+    },
+```
+
 ## Silencing Translation Warnings
 
-By default, the `polyglotI18nProvider` logs a warning in the console each time it is called with a message that can't be found in the current translations. This is a Polyglot feature that helps tracking missing translation messages.
+By default, the `polyglotI18nProvider` logs a warning in the console each time it is called with a message that can't be found in the current translations. This is a Polyglot feature that helps to track missing translation messages.
 
 But you may want to avoid this for some messages, e.g. error messages from a data source you don't control (like a web server).
 

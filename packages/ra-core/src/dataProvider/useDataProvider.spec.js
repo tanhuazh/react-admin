@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { cleanup, act, fireEvent } from '@testing-library/react';
 import expect from 'expect';
 
@@ -18,6 +19,36 @@ const UseGetOne = () => {
             .then(res => setData(res.data))
             .catch(e => setError(e));
     }, [dataProvider]);
+    if (error) return <div data-testid="error">{error.message}</div>;
+    if (data) return <div data-testid="data">{JSON.stringify(data)}</div>;
+    return <div data-testid="loading">loading</div>;
+};
+
+const UseCustomVerb = ({ onSuccess }) => {
+    const [data, setData] = useState();
+    const [error, setError] = useState();
+    const dataProvider = useDataProvider();
+    useEffect(() => {
+        dataProvider
+            .customVerb({ id: 1 }, ['something'], { onSuccess })
+            .then(res => setData(res.data))
+            .catch(e => setError(e));
+    }, [dataProvider, onSuccess]);
+    if (error) return <div data-testid="error">{error.message}</div>;
+    if (data) return <div data-testid="data">{JSON.stringify(data)}</div>;
+    return <div data-testid="loading">loading</div>;
+};
+
+const UseCustomVerbWithStandardSignature = ({ onSuccess }) => {
+    const [data, setData] = useState();
+    const [error, setError] = useState();
+    const dataProvider = useDataProvider();
+    useEffect(() => {
+        dataProvider
+            .customVerb('posts', { id: 1 }, { onSuccess })
+            .then(res => setData(res.data))
+            .catch(e => setError(e));
+    }, [dataProvider, onSuccess]);
     if (error) return <div data-testid="error">{error.message}</div>;
     if (data) return <div data-testid="data">{JSON.stringify(data)}</div>;
     return <div data-testid="loading">loading</div>;
@@ -86,7 +117,7 @@ describe('useDataProvider', () => {
     });
 
     it('should dispatch CUSTOM_FETCH actions by default', async () => {
-        const getOne = jest.fn(() => Promise.resolve({ data: null }));
+        const getOne = jest.fn(() => Promise.resolve({ data: { id: 123 } }));
         const dataProvider = { getOne };
         const { dispatch } = renderWithRedux(
             <DataProviderContext.Provider value={dataProvider}>
@@ -106,6 +137,88 @@ describe('useDataProvider', () => {
         expect(dispatch.mock.calls[4][0].type).toBe('RA/FETCH_END');
     });
 
+    it('should call custom verbs with standard signature (resource, payload, options)', async () => {
+        const onSuccess = jest.fn();
+        const customVerb = jest.fn(() => Promise.resolve({ data: null }));
+        const dataProvider = { customVerb };
+        renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <UseCustomVerbWithStandardSignature onSuccess={onSuccess} />
+            </DataProviderContext.Provider>
+        );
+        // wait for the dataProvider to return
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve));
+        });
+
+        expect(customVerb).toHaveBeenCalledWith('posts', { id: 1 });
+    });
+
+    it('should accept calls to custom verbs with no arguments', async () => {
+        const UseCustomVerbWithNoArgument = ({ onSuccess }) => {
+            const [data, setData] = useState();
+            const [error, setError] = useState();
+            const dataProvider = useDataProvider();
+            useEffect(() => {
+                dataProvider
+                    .customVerb()
+                    .then(res => setData(res.data))
+                    .catch(e => setError(e));
+            }, [dataProvider, onSuccess]);
+            if (error) return <div data-testid="error">{error.message}</div>;
+            if (data)
+                return <div data-testid="data">{JSON.stringify(data)}</div>;
+            return <div data-testid="loading">loading</div>;
+        };
+        const customVerb = jest.fn(() => Promise.resolve({ data: null }));
+        const dataProvider = { customVerb };
+        renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <UseCustomVerbWithNoArgument />
+            </DataProviderContext.Provider>
+        );
+        // wait for the dataProvider to return
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve));
+        });
+
+        expect(customVerb).toHaveBeenCalledWith();
+    });
+
+    it('should accept custom arguments for custom verbs', async () => {
+        const customVerb = jest.fn(() => Promise.resolve({ data: null }));
+        const dataProvider = { customVerb };
+        renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <UseCustomVerb />
+            </DataProviderContext.Provider>
+        );
+        // wait for the dataProvider to return
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve));
+        });
+
+        expect(customVerb).toHaveBeenCalledWith({ id: 1 }, ['something']);
+    });
+
+    it('should accept custom arguments for custom verbs and allow options', async () => {
+        const onSuccess = jest.fn();
+        const customVerb = jest.fn(() => Promise.resolve({ data: null }));
+        const dataProvider = { customVerb };
+        renderWithRedux(
+            <DataProviderContext.Provider value={dataProvider}>
+                <UseCustomVerb onSuccess={onSuccess} />
+            </DataProviderContext.Provider>
+        );
+        // wait for the dataProvider to return
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve));
+        });
+
+        expect(customVerb).toHaveBeenCalledWith({ id: 1 }, ['something']);
+        expect(onSuccess).toHaveBeenCalledWith({ data: null });
+    });
+
     describe('options', () => {
         it('should accept an action option to dispatch a custom action', async () => {
             const UseGetOneWithCustomAction = () => {
@@ -120,7 +233,9 @@ describe('useDataProvider', () => {
                     return <div data-testid="data">{JSON.stringify(data)}</div>;
                 return <div data-testid="loading">loading</div>;
             };
-            const getOne = jest.fn(() => Promise.resolve({ data: null }));
+            const getOne = jest.fn(() =>
+                Promise.resolve({ data: { id: 123 } })
+            );
             const dataProvider = { getOne };
             const { dispatch } = renderWithRedux(
                 <DataProviderContext.Provider value={dataProvider}>
@@ -316,44 +431,44 @@ describe('useDataProvider', () => {
             await act(async () => await new Promise(r => setTimeout(r)));
             expect(getOne).toBeCalledTimes(2);
         });
-    });
 
-    it('should not use the cache after an update', async () => {
-        const getOne = jest.fn(() => {
-            const validUntil = new Date();
-            validUntil.setTime(validUntil.getTime() + 1000);
-            return Promise.resolve({ data: { id: 1 }, validUntil });
+        it('should not use the cache after an update', async () => {
+            const getOne = jest.fn(() => {
+                const validUntil = new Date();
+                validUntil.setTime(validUntil.getTime() + 1000);
+                return Promise.resolve({ data: { id: 1 }, validUntil });
+            });
+            const dataProvider = {
+                getOne,
+                update: () => Promise.resolve({ data: { id: 1, foo: 'bar' } }),
+            };
+            const Update = () => {
+                const [update] = useUpdate('posts', 1, { foo: 'bar ' });
+                return <button onClick={() => update()}>update</button>;
+            };
+            const { getByText, rerender } = renderWithRedux(
+                <DataProviderContext.Provider value={dataProvider}>
+                    <UseGetOne key="1" />
+                    <Update />
+                </DataProviderContext.Provider>,
+                { admin: { resources: { posts: { data: {}, list: {} } } } }
+            );
+            // wait for the dataProvider to return
+            await act(async () => await new Promise(r => setTimeout(r)));
+            expect(getOne).toBeCalledTimes(1);
+            // click on the update button
+            await act(async () => {
+                fireEvent.click(getByText('update'));
+                await new Promise(r => setTimeout(r));
+            });
+            rerender(
+                <DataProviderContext.Provider value={dataProvider}>
+                    <UseGetOne key="2" />
+                </DataProviderContext.Provider>
+            );
+            // wait for the dataProvider to return
+            await act(async () => await new Promise(r => setTimeout(r)));
+            expect(getOne).toBeCalledTimes(2);
         });
-        const dataProvider = {
-            getOne,
-            update: () => Promise.resolve({ data: { id: 1, foo: 'bar' } }),
-        };
-        const Update = () => {
-            const [update] = useUpdate('posts', 1, { foo: 'bar ' });
-            return <button onClick={() => update()}>update</button>;
-        };
-        const { getByText, rerender } = renderWithRedux(
-            <DataProviderContext.Provider value={dataProvider}>
-                <UseGetOne key="1" />
-                <Update />
-            </DataProviderContext.Provider>,
-            { admin: { resources: { posts: { data: {}, list: {} } } } }
-        );
-        // wait for the dataProvider to return
-        await act(async () => await new Promise(r => setTimeout(r)));
-        expect(getOne).toBeCalledTimes(1);
-        // click on the update button
-        await act(async () => {
-            fireEvent.click(getByText('update'));
-            await new Promise(r => setTimeout(r));
-        });
-        rerender(
-            <DataProviderContext.Provider value={dataProvider}>
-                <UseGetOne key="2" />
-            </DataProviderContext.Provider>
-        );
-        // wait for the dataProvider to return
-        await act(async () => await new Promise(r => setTimeout(r)));
-        expect(getOne).toBeCalledTimes(2);
     });
 });

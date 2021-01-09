@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import expect from 'expect';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 import { Form } from 'react-final-form';
@@ -39,6 +39,45 @@ describe('<RadioButtonGroupInput />', () => {
         expect(input2.type).toBe('radio');
         expect(input2.name).toBe('type');
         expect(input2.checked).toBeFalsy();
+    });
+
+    it('should set labels correctly for react component choices', () => {
+        const FullNameField = ({ record }) => (
+            <span>
+                {record.first_name} {record.last_name}
+            </span>
+        );
+
+        const { getByLabelText, queryByText } = render(
+            <Form
+                onSubmit={jest.fn}
+                render={() => (
+                    <RadioButtonGroupInput
+                        resource={'people'}
+                        source="type"
+                        choices={[
+                            {
+                                id: 123,
+                                first_name: 'Leo',
+                                last_name: 'Tolstoi',
+                            },
+                            {
+                                id: 456,
+                                first_name: 'Jane',
+                                last_name: 'Austen',
+                            },
+                        ]}
+                        optionText={record => <FullNameField record={record} />}
+                        label="People"
+                    />
+                )}
+            />
+        );
+        expect(queryByText('People')).not.toBeNull();
+        const input1 = getByLabelText('Leo Tolstoi');
+        expect(input1.id).toBe('type_123');
+        const input2 = getByLabelText('Jane Austen');
+        expect(input2.id).toBe('type_456');
     });
 
     it('should trigger custom onChange when clicking radio button', async () => {
@@ -299,15 +338,16 @@ describe('<RadioButtonGroupInput />', () => {
             );
 
             const input = getByLabelText('Mastercard') as HTMLInputElement;
+            input.focus();
             fireEvent.click(input);
             expect(input.checked).toBe(true);
 
-            fireEvent.blur(input);
+            input.blur();
 
-            expect(getByText('ra.validation.error')).toBeDefined();
+            expect(getByText('ra.validation.error')).not.toBeNull();
         });
 
-        it('should be displayed even with an helper Text', () => {
+        it('should be displayed even with a helper Text', () => {
             // This validator always returns an error
             const validate = () => 'ra.validation.error';
 
@@ -325,10 +365,11 @@ describe('<RadioButtonGroupInput />', () => {
                 />
             );
             const input = getByLabelText('Mastercard') as HTMLInputElement;
+            input.focus();
             fireEvent.click(input);
             expect(input.checked).toBe(true);
 
-            fireEvent.blur(input);
+            input.blur();
 
             const error = getByText('ra.validation.error');
             expect(error).toBeDefined();

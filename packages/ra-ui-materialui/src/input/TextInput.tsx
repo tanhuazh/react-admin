@@ -1,11 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import * as React from 'react';
+import { FunctionComponent } from 'react';
 import PropTypes from 'prop-types';
 import { useInput, FieldTitle, InputProps } from 'ra-core';
 import { TextFieldProps } from '@material-ui/core/TextField';
 
 import ResettableTextField from './ResettableTextField';
 import InputHelperText from './InputHelperText';
-import sanitizeRestProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 
 export type TextInputProps = InputProps<TextFieldProps> &
     Omit<TextFieldProps, 'label' | 'helperText'>;
@@ -80,7 +81,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
                 />
             }
             {...options}
-            {...sanitizeRestProps(rest)}
+            {...sanitizeInputRestProps(rest)}
         />
     );
 };

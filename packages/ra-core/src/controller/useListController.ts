@@ -8,24 +8,33 @@ import get from 'lodash/get';
 import { useCheckMinimumRequiredProps } from './checkMinimumRequiredProps';
 import useListParams from './useListParams';
 import useRecordSelection from './useRecordSelection';
-import useVersion from './useVersion';
-import { useTranslate } from '../i18n';
-import { SORT_ASC } from '../reducer/admin/resource/list/queryReducer';
-import { CRUD_GET_LIST, ListParams } from '../actions';
-import { useNotify } from '../sideEffect';
-import { Sort, RecordMap, Identifier, ReduxState, Record } from '../types';
+import useTranslate from '../i18n/useTranslate';
+import useNotify from '../sideEffect/useNotify';
 import useGetList from '../dataProvider/useGetList';
+import { SORT_ASC } from '../reducer/admin/resource/list/queryReducer';
+import { CRUD_GET_LIST } from '../actions';
+import defaultExporter from '../export/defaultExporter';
+import {
+    FilterPayload,
+    SortPayload,
+    RecordMap,
+    Identifier,
+    ReduxState,
+    Record,
+    Exporter,
+} from '../types';
+import { useResourceContext } from '../core';
 
 export interface ListProps {
     // the props you can change
-    filter?: object;
+    filter?: FilterPayload;
     filters?: ReactElement<any>;
     filterDefaultValues?: object;
-    pagination?: ReactElement<any>;
     perPage?: number;
-    sort?: Sort;
+    sort?: SortPayload;
+    exporter?: Exporter | false;
     // the props managed by react-admin
-    basePath: string;
+    basePath?: string;
     debounce?: number;
     hasCreate?: boolean;
     hasEdit?: boolean;
@@ -33,8 +42,7 @@ export interface ListProps {
     hasShow?: boolean;
     location?: Location;
     path?: string;
-    query: ListParams;
-    resource: string;
+    resource?: string;
     [key: string]: any;
 }
 
@@ -45,12 +53,15 @@ const defaultSort = {
 
 const defaultData = {};
 
-export interface ListControllerProps<RecordType = Record> {
+export interface ListControllerProps<RecordType extends Record = Record> {
     basePath: string;
-    currentSort: Sort;
+    currentSort: SortPayload;
     data: RecordMap<RecordType>;
-    defaultTitle: string;
+    defaultTitle?: string;
     displayedFilters: any;
+    error?: any;
+    exporter?: Exporter | false;
+    filter?: FilterPayload;
     filterValues: any;
     hasCreate: boolean;
     hideFilter: (filterName: string) => void;
@@ -64,13 +75,16 @@ export interface ListControllerProps<RecordType = Record> {
     perPage: number;
     resource: string;
     selectedIds: Identifier[];
-    setFilters: (filters: any, displayedFilters: any) => void;
+    setFilters: (
+        filters: any,
+        displayedFilters: any,
+        debounce?: boolean
+    ) => void;
     setPage: (page: number) => void;
     setPerPage: (page: number) => void;
-    setSort: (sort: string) => void;
+    setSort: (sort: string, order?: string) => void;
     showFilter: (filterName: string, defaultValue: any) => void;
     total: number;
-    version: number;
 }
 
 /**
@@ -90,21 +104,22 @@ export interface ListControllerProps<RecordType = Record> {
  *     return <ListView {...controllerProps} {...props} />;
  * }
  */
-const useListController = <RecordType = Record>(
+const useListController = <RecordType extends Record = Record>(
     props: ListProps
 ): ListControllerProps<RecordType> => {
     useCheckMinimumRequiredProps('List', ['basePath', 'resource'], props);
 
     const {
         basePath,
-        resource,
-        hasCreate,
+        exporter = defaultExporter,
         filterDefaultValues,
+        hasCreate,
         sort = defaultSort,
         perPage = 10,
         filter,
         debounce = 500,
     } = props;
+    const resource = useResourceContext(props);
 
     if (filter && isValidElement(filter)) {
         throw new Error(
@@ -115,7 +130,6 @@ const useListController = <RecordType = Record>(
     const location = useLocation();
     const translate = useTranslate();
     const notify = useNotify();
-    const version = useVersion();
 
     const [query, queryModifiers] = useListParams({
         resource,
@@ -132,7 +146,7 @@ const useListController = <RecordType = Record>(
      * We want the list of ids to be always available for optimistic rendering,
      * and therefore we need a custom action (CRUD_GET_LIST) that will be used.
      */
-    const { ids, total, loading, loaded } = useGetList<RecordType>(
+    const { ids, total, error, loading, loaded } = useGetList<RecordType>(
         resource,
         {
             page: query.page,
@@ -142,13 +156,20 @@ const useListController = <RecordType = Record>(
         { ...query.filter, ...filter },
         {
             action: CRUD_GET_LIST,
-            version,
             onFailure: error =>
                 notify(
                     typeof error === 'string'
                         ? error
                         : error.message || 'ra.notification.http_error',
-                    'warning'
+                    'warning',
+                    {
+                        _:
+                            typeof error === 'string'
+                                ? error
+                                : error && error.message
+                                ? error.message
+                                : undefined,
+                    }
                 ),
         }
     );
@@ -166,24 +187,45 @@ const useListController = <RecordType = Record>(
     // useGetList hook again. While the result of this new call is loading,
     // the ids and total are empty. To avoid rendering an empty list at that
     // moment, we override the ids and total with the latest loaded ones.
-    const defaultIds = useSelector(
-        (state: ReduxState): Identifier[] =>
-            get(state.admin.resources, [resource, 'list', 'ids'], [])
+    const defaultIds = useSelector((state: ReduxState): Identifier[] =>
+        get(state.admin.resources, [resource, 'list', 'ids'], [])
     );
-    const defaultTotal = useSelector(
-        (state: ReduxState): number =>
-            get(state.admin.resources, [resource, 'list', 'total'], 0)
+    const defaultTotal = useSelector((state: ReduxState): number =>
+        get(state.admin.resources, [resource, 'list', 'total'])
     );
+
+    // Since the total can be empty during the loading phase
+    // We need to override that total with the latest loaded one
+    // This way, the useEffect bellow won't reset the page to 1
+    const finalTotal = typeof total === 'undefined' ? defaultTotal : total;
+
+    const finalIds = typeof total === 'undefined' ? defaultIds : ids;
+
+    const totalPages = useMemo(() => {
+        return Math.ceil(finalTotal / query.perPage) || 1;
+    }, [query.perPage, finalTotal]);
 
     useEffect(() => {
         if (
             query.page <= 0 ||
-            (!loading && query.page > 1 && (ids || []).length === 0)
+            (!loading && query.page > 1 && (finalIds || []).length === 0)
         ) {
-            // query for a page that doesn't exist, set page to 1
+            // Query for a page that doesn't exist, set page to 1
             queryModifiers.setPage(1);
+        } else if (!loading && query.page > totalPages) {
+            // Query for a page out of bounds, set page to the last existing page
+            // It occurs when deleting the last element of the last page
+            queryModifiers.setPage(totalPages);
         }
-    }, [loading, query.page, ids, queryModifiers]);
+    }, [
+        loading,
+        query.page,
+        finalIds,
+        queryModifiers,
+        total,
+        totalPages,
+        defaultIds,
+    ]);
 
     const currentSort = useMemo(
         () => ({
@@ -207,10 +249,13 @@ const useListController = <RecordType = Record>(
         data,
         defaultTitle,
         displayedFilters: query.displayedFilters,
+        error,
+        exporter,
+        filter,
         filterValues: query.filterValues,
         hasCreate,
         hideFilter: queryModifiers.hideFilter,
-        ids: typeof total === 'undefined' ? defaultIds : ids,
+        ids: finalIds,
         loaded: loaded || defaultIds.length > 0,
         loading,
         onSelect: selectionModifiers.select,
@@ -225,8 +270,7 @@ const useListController = <RecordType = Record>(
         setPerPage: queryModifiers.setPerPage,
         setSort: queryModifiers.setSort,
         showFilter: queryModifiers.showFilter,
-        total: typeof total === 'undefined' ? defaultTotal : total,
-        version,
+        total: finalTotal,
     };
 };
 
@@ -236,6 +280,8 @@ export const injectedProps = [
     'data',
     'defaultTitle',
     'displayedFilters',
+    'error',
+    'exporter',
     'filterValues',
     'hasCreate',
     'hideFilter',
@@ -256,6 +302,7 @@ export const injectedProps = [
     'setSort',
     'showFilter',
     'total',
+    'totalPages',
     'version',
 ];
 

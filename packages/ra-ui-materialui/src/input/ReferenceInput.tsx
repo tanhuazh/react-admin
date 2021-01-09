@@ -5,37 +5,27 @@ import React, {
     ReactElement,
 } from 'react';
 import PropTypes from 'prop-types';
-import { FieldInputProps, FieldMetaState } from 'react-final-form';
 import {
     useInput,
     useReferenceInputController,
     InputProps,
-    Pagination,
-    Sort,
     warning as warningLog,
+    ListContextProvider,
+    ReferenceInputValue,
+    UseInputValue,
+    ResourceContextProvider,
 } from 'ra-core';
 
-import sanitizeInputProps from './sanitizeRestProps';
+import sanitizeInputRestProps from './sanitizeInputRestProps';
 import LinearProgress from '../layout/LinearProgress';
 import Labeled from './Labeled';
 import ReferenceError from './ReferenceError';
 
-interface Props {
-    allowEmpty: boolean;
-    basePath: string;
-    children: ReactElement;
-    classes: any;
-    className: string;
-    label: string;
-    reference: string;
-    resource: string;
-    [key: string]: any;
-}
 /**
  * An Input component for choosing a reference record. Useful for foreign keys.
  *
  * This component fetches the possible values in the reference resource
- * (using `dataProvider.getMatching()`), then delegates rendering
+ * (using `dataProvider.getList()`), then delegates rendering
  * to a subcomponent, to which it passes the possible choices
  * as the `choices` attribute.
  *
@@ -110,7 +100,7 @@ interface Props {
  *     <AutocompleteInput optionText="title" />
  * </ReferenceInput>
  */
-const ReferenceInput: FunctionComponent<Props & InputProps> = ({
+const ReferenceInput: FunctionComponent<ReferenceInputProps> = ({
     format,
     onBlur,
     onChange,
@@ -165,48 +155,40 @@ ReferenceInput.defaultProps = {
     sort: { field: 'id', order: 'DESC' },
 };
 
-const sanitizeRestProps = ({
-    choices,
-    className,
-    crudGetMatching,
-    crudGetOne,
-    filter,
-    filterToQuery,
-    onChange,
-    perPage,
-    reference,
-    referenceSource,
-    setFilter,
-    setPagination,
-    setSort,
-    sort,
-    validation,
-    ...rest
-}: any) => sanitizeInputProps(rest);
-
-interface ReferenceInputViewProps {
+export interface ReferenceInputProps extends InputProps {
     allowEmpty?: boolean;
-    basePath: string;
+    basePath?: string;
     children: ReactElement;
-    choices: any[];
-    classes?: object;
+    classes?: any;
     className?: string;
-    error?: string;
-    helperText?: string | boolean;
-    id: string;
-    input: FieldInputProps<any, HTMLElement>;
-    isRequired: boolean;
-    label: string;
-    loading: boolean;
-    meta: FieldMetaState<any>;
+    filterToQuery?: (filter: string) => any;
+    label?: string;
+    perPage?: number;
     reference: string;
-    resource: string;
-    setFilter: (v: string) => void;
-    setPagination: (pagination: Pagination) => void;
-    setSort: (sort: Sort) => void;
-    source: string;
-    warning?: string;
+    // @deprecated
+    referenceSource?: (resource: string, source: string) => string;
+    resource?: string;
+    [key: string]: any;
 }
+
+const sanitizeRestProps = ({
+    dataStatus = null,
+    filter = null,
+    filterToQuery = null,
+    onChange = null,
+    perPage = null,
+    reference = null,
+    referenceRecord = null,
+    referenceSource = null,
+    sort = null,
+    validation = null,
+    ...rest
+}) => sanitizeInputRestProps(rest);
+
+export interface ReferenceInputViewProps
+    extends ReferenceInputValue,
+        ReferenceInputProps,
+        Omit<UseInputValue, 'id'> {}
 
 export const ReferenceInputView: FunctionComponent<ReferenceInputViewProps> = ({
     allowEmpty,
@@ -223,7 +205,9 @@ export const ReferenceInputView: FunctionComponent<ReferenceInputViewProps> = ({
     loading,
     label,
     meta,
+    possibleValues,
     resource,
+    reference,
     setFilter,
     setPagination,
     setSort,
@@ -277,25 +261,31 @@ export const ReferenceInputView: FunctionComponent<ReferenceInputViewProps> = ({
 
     const disabledHelperText = helperText === false ? { helperText } : {};
 
-    return cloneElement(children, {
-        allowEmpty,
-        classes,
-        className,
-        input,
-        isRequired,
-        label,
-        resource,
-        meta: finalMeta,
-        source,
-        choices,
-        basePath,
-        setFilter,
-        setPagination,
-        setSort,
-        translateChoice: false,
-        ...disabledHelperText,
-        ...sanitizeRestProps(rest),
-    });
+    return (
+        <ResourceContextProvider value={reference}>
+            <ListContextProvider value={possibleValues}>
+                {cloneElement(children, {
+                    allowEmpty,
+                    classes,
+                    className,
+                    input,
+                    isRequired,
+                    label,
+                    resource,
+                    meta: finalMeta,
+                    source,
+                    choices,
+                    basePath,
+                    setFilter,
+                    setPagination,
+                    setSort,
+                    translateChoice: false,
+                    ...disabledHelperText,
+                    ...sanitizeRestProps(rest),
+                })}
+            </ListContextProvider>
+        </ResourceContextProvider>
+    );
 };
 
 export default ReferenceInput;

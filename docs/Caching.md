@@ -26,7 +26,7 @@ In step 4, react-admin displays the post *before* fetching it, because it's alre
 
 Optimistic rendering improves user experience by displaying stale data while getting fresh data from the API, but it does not reduce the ecological footprint of an app, as the web app still makes API requests on every page. 
 
-**Tip**: This design choice explains why react-admin requires that all data provider methods return records of the same shape for a given resource. Otherwise, if the posts returned by `getList()` contain fewer fields than the posts returned by `getOne()`, in the previous scenario, the user will see an incomplete post at step 4.  
+**Tip**: This design choice explains why react-admin requires that all data provider methods return records of the same shape for a given resource. Otherwise, if the posts returned by `getList()` contain fewer fields than the posts returned by `getOne()`, in the previous scenario, the user will see an incomplete post at step 4.
 
 ## HTTP Cache
 
@@ -60,7 +60,7 @@ Refer to your backend framework or CDN documentation to enable cache headers - a
 
 HTTP cache can help improve the performance and reduce the ecological footprint of a web app. The main drawback is that responses are cached based on their request signature. The cached responses for `GET https://api.acme.com/posts` and `GET https://api.acme.com/posts/123` live in separate buckets on the client-side, and cannot be shared. As a consequence, the browser still makes a lot of useless requests to the API. HTTP cache also has another drawback: browser caches ignore the REST semantics. That means that a call to `DELETE https://api.acme.com/posts/123` can't invalidate the cache of the `GET https://api.acme.com/posts` request, and therefore the cache is sometimes wrong.
 
-These shortcomings explain why most APIs adopt use short expiration or use "validation caching" (based on `Etag` or `Last-Modified` headers) instead of "expiration caching" (based on the `Cache-Control` or `Expires` headers). But with validation caching, the client must send *every request* to the server (sometimes the server returns an empty response, letting the client know that it can use its cache). Validation caching reduces network traffic a lot less than expiration caching and has less impact on performance.
+These shortcomings explain why most APIs adopt short expiration or use "validation caching" (based on `Etag` or `Last-Modified` headers) instead of "expiration caching" (based on the `Cache-Control` or `Expires` headers). But with validation caching, the client must send *every request* to the server (sometimes the server returns an empty response, letting the client know that it can use its cache). Validation caching reduces network traffic a lot less than expiration caching and has less impact on performance.
 
 Finally, if your API uses GraphQL, it probably doesn't offer HTTP caching. 
 
@@ -76,7 +76,7 @@ For instance, if the end-user displays a list of posts, then clicks on a post in
 2. Call `dataProvider.getList('posts')`, and store the result in the Redux store
 3. Re-render the List with the data from the Redux store
 4. When the user clicks on a post, display immediately the post from the Redux store (optimistic rendering)
-5. Check that the post of id 123 is still valid, and as it's the case, end here
+5. Check the post of id 123 is still valid, and as it's the case, end here
 
 The application cache uses the semantics of the `dataProvider` verb. That means that requests for a list (`getList`) also populate the cache for individual records (`getOne`, `getMany`). That also means that write requests (`create`, `udpate`, `updateMany`, `delete`, `deleteMany`) invalidate the list cache - because after an update, for instance, the ordering of items can be changed.
 
@@ -121,7 +121,7 @@ It's your responsibility to determine the validity date based on the API respons
 
 For instance, to have a `dataProvider` declare responses for `getOne`, `getMany`, and `getList` valid for 5 minutes, you can wrap it in the following proxy:
 
-```jsx
+```js
 // in src/dataProvider.js
 import simpleRestProvider from 'ra-data-simple-rest';
 
@@ -129,7 +129,7 @@ const dataProvider = simpleRestProvider('http://path.to.my.api/');
 
 const cacheDataProviderProxy = (dataProvider, duration =  5 * 60 * 1000) =>
     new Proxy(dataProvider, {
-        get: (target, name: string) => (resource, params) => {
+        get: (target, name) => (resource, params) => {
             if (name === 'getOne' || name === 'getMany' || name === 'getList') {
                 return dataProvider[name](resource, params).then(response => {
                     const validUntil = new Date();
@@ -145,7 +145,7 @@ const cacheDataProviderProxy = (dataProvider, duration =  5 * 60 * 1000) =>
 export default cacheDataProviderProxy(dataProvider);
 ```
 
-**Tip**: As caching responses for a fixed period of time is a common pattern, react-admin exports this `cacheDataProviderProxy` wrapper, so you can write the following instead:
+**Tip**: As caching responses for a fixed period is a common pattern, react-admin exports this `cacheDataProviderProxy` wrapper, so you can write the following instead:
 
 ```jsx
 // in src/dataProvider.js
@@ -157,4 +157,4 @@ const dataProvider = simpleRestProvider('http://path.to.my.api/');
 export default cacheDataProviderProxy(dataProvider);
 ```
 
-Application cache provides a very significative boost for the end-user and saves a large portion of the network traffic. Even a short expiration date (30 seconds or one minute) can speed up a complex admin with a low risk of displaying stale data. Adding an application cache is, therefore, a warmly recommended practice!
+Application cache provides a very significant boost for the end-user and saves a large portion of the network traffic. Even a short expiration date (30 seconds or one minute) can speed up a complex admin with a low risk of displaying stale data. Adding an application cache is, therefore, a warmly recommended practice!

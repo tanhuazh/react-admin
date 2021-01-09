@@ -1,7 +1,6 @@
 import React, {
     Fragment,
-    useState,
-    useCallback,
+    ReactEventHandler,
     FC,
     ReactElement,
     SyntheticEvent,
@@ -14,13 +13,12 @@ import classnames from 'classnames';
 import inflection from 'inflection';
 import {
     useTranslate,
-    useDelete,
-    useRefresh,
-    useNotify,
-    useRedirect,
-    CRUD_DELETE,
     Record,
     RedirectionSideEffect,
+    useDeleteWithConfirmController,
+    OnSuccess,
+    OnFailure,
+    useResourceContext,
 } from 'ra-core';
 
 import Confirm from '../layout/Confirm';
@@ -37,60 +35,33 @@ const DeleteWithConfirmButton: FC<DeleteWithConfirmButtonProps> = props => {
         label = 'ra.action.delete',
         onClick,
         record,
-        resource,
-        redirect: redirectTo = 'list',
+        redirect = 'list',
+        onSuccess,
+        onFailure,
         ...rest
     } = props;
-    const [open, setOpen] = useState(false);
     const translate = useTranslate();
-    const notify = useNotify();
-    const redirect = useRedirect();
-    const refresh = useRefresh();
     const classes = useStyles(props);
-
-    const [deleteOne, { loading }] = useDelete(resource, record.id, record, {
-        action: CRUD_DELETE,
-        onSuccess: () => {
-            notify('ra.notification.deleted', 'info', { smart_count: 1 });
-            redirect(redirectTo, basePath);
-            refresh();
-        },
-        onFailure: error => {
-            notify(
-                typeof error === 'string'
-                    ? error
-                    : error.message || 'ra.notification.http_error',
-                'warning'
-            );
-            setOpen(false);
-        },
-        undoable: false,
+    const {
+        open,
+        loading,
+        handleDialogOpen,
+        handleDialogClose,
+        handleDelete,
+    } = useDeleteWithConfirmController({
+        record,
+        redirect,
+        basePath,
+        onClick,
+        onSuccess,
+        onFailure,
     });
-
-    const handleClick = e => {
-        setOpen(true);
-        e.stopPropagation();
-    };
-
-    const handleDialogClose = e => {
-        setOpen(false);
-        e.stopPropagation();
-    };
-
-    const handleDelete = useCallback(
-        event => {
-            deleteOne();
-            if (typeof onClick === 'function') {
-                onClick(event);
-            }
-        },
-        [deleteOne, onClick]
-    );
+    const resource = useResourceContext(props);
 
     return (
         <Fragment>
             <Button
-                onClick={handleClick}
+                onClick={handleDialogOpen}
                 label={label}
                 className={classnames(
                     'ra-delete-button',
@@ -108,13 +79,16 @@ const DeleteWithConfirmButton: FC<DeleteWithConfirmButtonProps> = props => {
                 title={confirmTitle}
                 content={confirmContent}
                 translateOptions={{
-                    name: inflection.humanize(
-                        translate(`resources.${resource}.name`, {
-                            smart_count: 1,
-                            _: inflection.singularize(resource),
-                        }),
-                        true
-                    ),
+                    name: translate(`resources.${resource}.forcedCaseName`, {
+                        smart_count: 1,
+                        _: inflection.humanize(
+                            translate(`resources.${resource}.name`, {
+                                smart_count: 1,
+                                _: inflection.singularize(resource),
+                            }),
+                            true
+                        ),
+                    }),
                     id: record.id,
                 }}
                 onConfirm={handleDelete}
@@ -150,7 +124,7 @@ interface Props {
     confirmContent?: string;
     icon?: ReactElement;
     label?: string;
-    onClick?: (e: MouseEvent) => void;
+    onClick?: ReactEventHandler<any>;
     record?: Record;
     redirect?: RedirectionSideEffect;
     resource?: string;
@@ -162,9 +136,11 @@ interface Props {
     saving?: boolean;
     submitOnEnter?: boolean;
     undoable?: boolean;
+    onSuccess?: OnSuccess;
+    onFailure?: OnFailure;
 }
 
-type DeleteWithConfirmButtonProps = Props & ButtonProps;
+export type DeleteWithConfirmButtonProps = Props & ButtonProps;
 
 DeleteWithConfirmButton.propTypes = {
     basePath: PropTypes.string,

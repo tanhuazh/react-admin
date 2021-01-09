@@ -20,7 +20,7 @@ One issue you may run into when attempting to render custom `Create` or `Edit` v
 Luckily, react-admin provides access to a `TestContext` wrapper component that can be used to initialise your component with many of the expected react-admin props:
 
 ```jsx
-import React from 'react';
+import * as React from "react";
 import { TestContext } from 'react-admin';
 import { mount } from 'enzyme';
 import MyCustomEditView from './my-custom-edit-view';
@@ -54,7 +54,7 @@ At this point, your component should `mount` without errors and you can unit tes
 
 ## Enabling reducers to ensure actions are dispatched
 
-If your component relies on a a reducer, you can enable reducers using the `enableReducers` prop:
+If your component relies on a reducer, you can enable reducers using the `enableReducers` prop:
 
 ```jsx
 myCustomEditView = mount(
@@ -68,7 +68,7 @@ This means that reducers will work as they will within the app.
 
 ## Spying on the store 'dispatch'
 
-If you are using `useDispatch` within your components, it is likely you will want to test that actions have been dispatched with the correct arguments.  You can return the `store` being used within the tests using a `renderProp`.
+If you are using `useDispatch` within your components, it is likely you will want to test that actions have been dispatched with the correct arguments. You can return the `store` being used within the tests using a `renderProp`.
 
 ```jsx
 let dispatchSpy;
@@ -89,15 +89,15 @@ it('should send the user to another url', () => {
 
 ## Testing Permissions
 
-As explained on the [Authorization page](./Authorization.md), it's possible to manage permissions via the authentication provider in order to filter page and fields the users can see.
+As explained on the [Auth Provider chapter](./Authentication.md#authorization), it's possible to manage permissions via the `authProvider` in order to filter page and fields the users can see.
 
-In order to avoid regressions and make the design explicit to your co-workers, it's better to unit test which fields is supposed to be displayed or hidden for each permission.
+In order to avoid regressions and make the design explicit to your co-workers, it's better to unit test which fields are supposed to be displayed or hidden for each permission.
 
-Here is an example with Jest and Enzyme, which is testing the [User `show` page of the simple example](https://github.com/marmelab/react-admin/blob/master/examples/simple/src/users/UserShow.js).
+Here is an example with Jest and Enzyme, which is testing the [`UserShow` page of the simple example](https://github.com/marmelab/react-admin/blob/master/examples/simple/src/users/UserShow.js).
 
 ```jsx
 // UserShow.spec.js
-import React from 'react';
+import * as React from "react";
 import { shallow } from 'enzyme';
 import { Tab, TextField } from 'react-admin';
 
